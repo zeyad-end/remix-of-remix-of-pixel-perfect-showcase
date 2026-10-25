@@ -3,7 +3,13 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, Respons
 import { Users, UserCheck, UserX, ScanLine, TrendingUp, TrendingDown, PiggyBank, Banknote, UserPlus, CalendarPlus, RefreshCcw, Receipt, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Panel, PageHeader, StatCard } from "@/components/kit";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useCloud } from "@/components/CloudProvider";
+import { getDemoSession } from "@/lib/demo";
+import { readGymEvents } from "@/lib/gym-notifications-demo";
+import { getGymNotices } from "@/lib/gym-notifications.functions";
 import { Input } from "@/components/ui/input";
 import { dashboardTotals, gymToday, reportingEvents } from "@/lib/gym-reporting";
 import { membershipStatus } from "@/lib/membership-link";
@@ -38,10 +44,14 @@ function Dashboard() {
   const revenueSeries = Array.from({ length: 7 }, (_, i) => {
     const day = new Date(`${date}T12:00:00`); day.setDate(day.getDate() - 6 + i);
     const key = localDate(day); const values = dashboardTotals(sessions, events, transactions, key);
-    return { date: key, month: key.slice(5), revenue: values.revenue, expenses: values.expenses, members: events.filter(e => e.kind === 'created' && e.date <= key).length };
+    return { date: key, month: key.slice(5), revenue: values.revenue, expenses: values.expenses, members: events.filter(e => e.kind === 'created' && e.date === key).length };
   });
   const attendanceSeries = revenueSeries.map(r => ({ day: r.month, visits: attendance.filter(a => a.date === r.date).length }));
-  const activity = events.slice().sort((a,b) => b.date.localeCompare(a.date)).slice(0,5).map(e => ({ action: `${e.kind === 'created' ? 'Membership created' : 'Membership renewed'} · ${members.find(m => m.id === e.memberId)?.name ?? 'Membership'}`, user: egp(e.price), time: e.date }));
+  const c = useCloud(); const getNotices = useServerFn(getGymNotices); const demo = !!getDemoSession();
+  const { data: logged = [], refetch } = useQuery({ queryKey: ['gym-activity', c.gymId, demo], enabled: !!c.gymId, queryFn: async () => demo ? readGymEvents(c.gymId) : await getNotices({ data: { gymId: c.gymId, day: today } }).catch(() => []), refetchInterval: 15000 });
+  useEffect(() => { const r = () => { void refetch(); }; window.addEventListener('ironhaus-gym-events', r); return () => window.removeEventListener('ironhaus-gym-events', r); }, [refetch, members, sessions, transactions, attendance]);
+  useEffect(() => { void refetch(); }, [members, sessions, transactions, attendance, refetch]);
+  const activity = logged.filter(e => e.type !== 'Membership expiration').slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 8).map(e => ({ type: e.type, action: e.description, time: new Date(e.createdAt).toLocaleString() }));
   return (
     <>
       <PageHeader title="Dashboard" subtitle={`${date} · ${gym.name}`} actions={<Input aria-label="Dashboard date" type="date" className="w-auto" value={date} onChange={e => { if(e.target.value) setDate(e.target.value); }} />} />
@@ -80,16 +90,17 @@ function Dashboard() {
         </Panel>
         <Panel title="Recent activity">
           <ul className="space-y-4">
-            {activity.slice(0, 5).map((a, i) => (
+            {!activity.length && <li className="text-sm text-muted-foreground">No activity recorded yet.</li>}
+            {activity.map((a, i) => (
               <li key={i} className="flex gap-3">
                 <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                <div className="min-w-0"><div className="text-sm">{a.action}</div><div className="text-xs text-muted-foreground">{a.user} · {a.time}</div></div>
+                <div className="min-w-0"><div className="text-xs font-semibold text-primary">{a.type}</div><div className="break-words text-sm">{a.action}</div><div className="text-xs text-muted-foreground">{a.time}</div></div>
               </li>
             ))}
           </ul>
         </Panel>
-        <Panel title="Recorded membership growth">
-          <div className="h-52"><ResponsiveContainer><LineChart data={revenueSeries}><CartesianGrid stroke="var(--border)" vertical={false} /><XAxis dataKey="month" {...axis} /><YAxis {...axis} width={35} /><Tooltip {...tip} /><Line dataKey="members" stroke="var(--chart-2)" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></div>
+        <Panel title="New memberships · last 7 days">
+          <div className="h-52"><ResponsiveContainer><LineChart data={revenueSeries}><CartesianGrid stroke="var(--border)" vertical={false} /><XAxis dataKey="month" {...axis} /><YAxis {...axis} width={35} allowDecimals={false} /><Tooltip {...tip} /><Line dataKey="members" name="New memberships" stroke="var(--chart-2)" strokeWidth={2} dot={false} /></LineChart></ResponsiveContainer></div>
         </Panel>
         <Panel title="Attendance · last 7 days">
           <div className="h-52"><ResponsiveContainer><BarChart data={attendanceSeries}><XAxis dataKey="day" {...axis} /><Tooltip {...tip} cursor={{ fill: "var(--secondary)" }} /><Bar dataKey="visits" fill="var(--chart-1)" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer></div>

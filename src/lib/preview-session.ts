@@ -1,4 +1,5 @@
 import { generateId } from './utils';
+import { prototypePreviewEnabled } from './preview-environment';
 
 export type PreviewAccountType = 'gym' | 'individual' | 'dashboard';
 export type PreviewSession = { id: string; type: PreviewAccountType; name: string; scenarioKey?: string };
@@ -29,7 +30,7 @@ export async function createStablePreviewSession(type: PreviewAccountType, name:
 }
 
 export function readPreviewSession(): PreviewSession | null {
-  if (!import.meta.env.DEV || typeof window === 'undefined') return null;
+  if (!prototypePreviewEnabled() || typeof window === 'undefined') return null;
   try {
     const value = JSON.parse(sessionStorage.getItem(key) ?? 'null');
     return value?.id?.startsWith('preview-') && ['gym', 'individual', 'dashboard'].includes(value.type) && typeof value.name === 'string' ? value : null;
@@ -37,7 +38,7 @@ export function readPreviewSession(): PreviewSession | null {
 }
 
 export function savePreviewSession(session: PreviewSession | null) {
-  if (session && import.meta.env.DEV) sessionStorage.setItem(key, JSON.stringify(session));
+  if (session && prototypePreviewEnabled()) sessionStorage.setItem(key, JSON.stringify(session));
   else sessionStorage.removeItem(key);
 }
 

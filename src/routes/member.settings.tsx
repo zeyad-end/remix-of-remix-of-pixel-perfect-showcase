@@ -12,6 +12,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { seo } from "@/lib/seo";
 import { readPreviewSession } from '@/lib/preview-session';
+import { SampleAccountQR } from '@/components/SampleAccountQR';
 export const Route = createFileRoute("/member/settings")({
   head: () =>
     seo(
@@ -27,7 +28,7 @@ function Settings() {
   if (!c.profile) return null;
   return (
     <ClientShell title="Account Settings">
-      {c.profile.gyvora_id&&<p className="mb-6 break-all text-sm text-muted-foreground">GYVORA ID · {c.profile.gyvora_id}</p>}
+      {readPreviewSession() ? <div className="mb-6 max-w-lg"><SampleAccountQR kind="client"/></div> : c.profile.gyvora_id&&<p className="mb-6 break-all text-sm text-muted-foreground">GYVORA ID · {c.profile.gyvora_id}</p>}
       <form
         className="max-w-lg space-y-5"
         onSubmit={async (e) => {

@@ -9,6 +9,8 @@ import { useStore } from "@/lib/store";
 import { useCloud } from "@/components/CloudProvider";
 import { seo } from "@/lib/seo";
 import { AppBrand } from '@/components/AppBrand';
+import { readPreviewSession } from '@/lib/preview-session';
+import { SampleAccountQR } from '@/components/SampleAccountQR';
 
 export const Route = createFileRoute("/_gym/qr")({
   head: () => seo("QR management", "Generate the gym registration QR and member QR cards."),
@@ -26,9 +28,9 @@ function QR() {
       <PageHeader title="QR management" />
       <div className="grid gap-6 lg:grid-cols-3">
         <Panel title="Gym registration QR" className="min-w-0">
-          <div className="mx-auto w-fit rounded-2xl bg-foreground p-5">{gymId?<QRCodeSVG value={gymId} size={180} bgColor="transparent" fgColor="currentColor" className="text-background" />:<p className="text-background">Permanent QR unavailable</p>}</div>
+          {readPreviewSession() ? <SampleAccountQR kind="gym"/> : <><div className="mx-auto w-fit rounded-2xl bg-foreground p-5">{gymId?<QRCodeSVG value={gymId} size={180} bgColor="transparent" fgColor="currentColor" className="text-background" />:<p className="text-background">Permanent QR unavailable</p>}</div>
           <div className="mt-4 text-center text-sm">GYVORA ID <span className="break-all font-display font-semibold text-primary">{gymId||'Unavailable'}</span></div>
-          <Button variant="secondary" className="mt-4 w-full"><Download className="h-4 w-4" />Download</Button>
+          <Button variant="secondary" className="mt-4 w-full"><Download className="h-4 w-4" />Download</Button></>}
         </Panel>
         <Panel title="Find member" className="min-w-0">
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search member" className="bg-surface" />

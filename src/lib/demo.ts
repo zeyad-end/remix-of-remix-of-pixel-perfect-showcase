@@ -13,6 +13,7 @@ import { demoIdentity, demoIdentityMatches, ensureDemoIdentity } from './demo-id
 import { normalizeAccountLookup } from './gyvora-id';
 import { validateMembershipChanges } from './membership-link';
 import { gymToday } from './gym-reporting';
+import { readSampleRequest } from './prototype-scenario';
 
 /**
  * Prototype-only demo layer. Completely isolated from production auth and the
@@ -533,6 +534,8 @@ function load(): DemoState {
 let demoState: DemoState = load();
 export function resetPrototypeData() {
   demoState = structuredClone(seed);
+  const sample = readSampleRequest();
+  if(readPreviewSession() && sample) demoState.requests.unshift({...sample,ownerName:'Prototype reviewer',email:'reviewer@example.test',phone:'',submittedAt:sample.requestDate});
   listeners.forEach(l => l());
 }
 

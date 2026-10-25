@@ -12,6 +12,8 @@ import g1 from "@/assets/gallery-1.jpg";
 import g2 from "@/assets/gallery-2.jpg";
 import { useCloud } from '@/components/CloudProvider';
 import { canChange } from '@/lib/gym-permissions';
+import { readPreviewSession } from '@/lib/preview-session';
+import { SampleAccountQR } from '@/components/SampleAccountQR';
 
 export const Route = createFileRoute("/_gym/gym")({
   head: () => seo("Gym profile", "Manage your gym's public profile, plans, trainers and gallery."),
@@ -54,6 +56,7 @@ function GymProfile() {
         </div>
       </div>
 
+      {readPreviewSession() && <SampleAccountQR kind="gym"/>}
       <div className="grid gap-6 lg:grid-cols-3">
         <Panel title="About the gym" className="lg:col-span-2">
           <p className="text-sm leading-relaxed text-muted-foreground">{gym.description}</p>

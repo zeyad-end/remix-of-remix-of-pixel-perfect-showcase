@@ -56,7 +56,7 @@ function Login() {
         savePreviewSession(session);
         await cloud.refresh();
         setName(''); setEmail(''); setPassword('');
-        await navigate({to:destination === 'dashboard' ? '/super-admin' : destination === 'gym' ? '/dashboard' : '/member'});
+        await navigate({to:destination === 'dashboard' ? '/super-admin' : destination === 'gym' ? '/subscription-request' : '/member'});
         return;
       }
       throw new Error('Prototype only — no real account or verification is created. Dashboard navigation is available in development preview.');

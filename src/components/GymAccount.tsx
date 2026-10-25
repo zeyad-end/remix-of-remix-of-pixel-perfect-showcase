@@ -11,6 +11,8 @@ import { ownerProfileSchema, saveOwnerProfile, type OwnerProfile } from '@/lib/o
 import { uploadImage } from '@/lib/images';
 import { supabase } from '@/integrations/supabase/client';
 import { changeGymCredentials } from '@/lib/gym-account.functions';
+import { readPreviewSession } from '@/lib/preview-session';
+import { SampleAccountQR } from './SampleAccountQR';
 export function GymAccount({ open, onOpenChange }: { open: boolean; onOpenChange: (value: boolean) => void }) {
  const c = useCloud(); const changeCredentials = useServerFn(changeGymCredentials);
  const [form, setForm] = useState<OwnerProfile>({ full_name: '', phone: '', email: '', photo: '' });

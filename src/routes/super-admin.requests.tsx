@@ -35,7 +35,9 @@ function Requests() {
       approveRequest(id);
       toast.success(`${gymName} approved — added to Approved Gyms (demo).`);
     } else {
-      rejectRequest(id);
+      const note = window.prompt('Rejection notes (optional)', '');
+      if (note === null) return;
+      rejectRequest(id, note);
       toast.success(`${gymName} rejected (demo).`);
     }
   }
@@ -49,7 +51,7 @@ function Requests() {
       <DataTable head={['Gym Name', 'Plan', 'Submitted', 'Contact', 'Decision']}>
         {pending.map((r) => (
           <tr key={r.id} className={r.id===request?'bg-secondary':''}>
-            <td className={td}>{r.gymName}{r.id==='prototype-subscription-request'&&<span className="block text-xs text-muted-foreground">Fictional sample</span>}</td>
+            <td className={td}>{r.gymName}{r.id.startsWith('prototype-')&&<span className="block text-xs text-muted-foreground">Fictional sample</span>}</td>
             <td className={td}>{r.plan}</td>
             <td className={td}>{r.requestDate}</td>
             <td className={td}>{r.email || r.phone || '—'}</td>

@@ -22,6 +22,12 @@ export function createPreviewSession(type: string, name: string, identifier: str
   return { id: `preview-${generateId()}`, type: type as PreviewAccountType, name: 'Prototype reviewer' };
 }
 
+export async function createStablePreviewSession(type: PreviewAccountType, name: string, identifier: string, password: string, enabled: boolean) {
+  const session = createPreviewSession(type, name, identifier, password, enabled);
+  const scenarioKey = await prototypeContactKey(identifier);
+  return {...session, id: `preview-${type}-${scenarioKey}`, scenarioKey};
+}
+
 export function readPreviewSession(): PreviewSession | null {
   if (!import.meta.env.DEV || typeof window === 'undefined') return null;
   try {

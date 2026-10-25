@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { makeSampleRequest, prototypeTrialActive, readSampleRequest, resetSampleRequest, sampleEntryStep, saveSampleRequest, startSampleTrial, SAMPLE_CLIENT_ID, SAMPLE_GYM_ID } from '@/lib/prototype-scenario';
-import { createPreviewSession, prototypeContactKey, savePreviewSession } from '@/lib/preview-session';
-import { getDemoState, resetPrototypeData } from '@/lib/demo';
+import { createPreviewSession, createStablePreviewSession, prototypeContactKey, savePreviewSession } from '@/lib/preview-session';
+import { approveRequest, rejectRequest, setGymStatus, getDemoState, resetPrototypeData } from '@/lib/demo';
 
 afterEach(()=>{resetSampleRequest();savePreviewSession(null);resetPrototypeData();localStorage.clear();});
 describe('fictional subscription and ID review',()=>{
@@ -11,9 +11,10 @@ describe('fictional subscription and ID review',()=>{
   for(const plan of ['Monthly Plan','Annual Plan']) it(`keeps ${plan} Pending across prototype account switches without real storage`,()=>{
     const row=makeSampleRequest('Fictional Review Gym',plan,false,'2026-10-25');
     localStorage.setItem('ironhaus-demo-data-v1','unchanged');
+    savePreviewSession({...createPreviewSession('gym','sample','sample','sample',true),scenarioKey:'fictional-test'});
     saveSampleRequest(row);savePreviewSession(createPreviewSession('dashboard','sample','sample','sample',true));resetPrototypeData();
-    expect(getDemoState().requests.filter(r=>r.id===row.id)).toHaveLength(1);
-    expect(getDemoState().requests.find(r=>r.id===row.id)).toMatchObject({gymName:'Fictional Review Gym',plan,requestDate:'2026-10-25',status:'Pending'});
+    expect(getDemoState().requests.filter(r=>r.id==='prototype-fictional-test')).toHaveLength(1);
+    expect(getDemoState().requests.find(r=>r.id==='prototype-fictional-test')).toMatchObject({gymName:'Fictional Review Gym',plan,requestDate:'2026-10-25',status:'Pending'});
     expect(localStorage.getItem('ironhaus-demo-data-v1')).toBe('unchanged');
   });
   it('Skip demonstrates Pending, never approval, and reset removes the example',()=>{
@@ -54,5 +55,40 @@ describe('fictional subscription and ID review',()=>{
     expect(prototypeTrialActive(returning,3601000)).toBe(false);
     expect(() => startSampleTrial(returning,3601000)).toThrow('Your trial period has ended');
     expect(sampleEntryStep(returning)).toBe(2);
+  });
+  it('returns to the same fictional identity with any password and separates account types', async () => {
+    const a=await createStablePreviewSession('gym','A','Owner@Example.test','first',true);
+    const b=await createStablePreviewSession('gym','B',' owner@example.test ','different',true);
+    const client=await createStablePreviewSession('individual','B','owner@example.test','different',true);
+    expect(a.id).toBe(b.id);
+    expect(a.id).not.toBe(client.id);
+    expect(JSON.stringify(a)).not.toContain('first');
+    await expect(createStablePreviewSession('gym','A','owner@example.test','any',false)).rejects.toThrow();
+  });
+  it('persists rejection notes, approval and freeze across role switches without touching legacy data', async () => {
+    const gym=await createStablePreviewSession('gym','Owner','+201000000987','anything',true);
+    localStorage.setItem('ironhaus-demo-data-v1','legacy untouched');
+    savePreviewSession(gym);
+    saveSampleRequest(makeSampleRequest('Persistent Fictional Gym','Monthly Plan',false,'2026-10-25'));
+    resetPrototypeData();
+    const id=`prototype-${gym.scenarioKey}`;
+    savePreviewSession(await createStablePreviewSession('dashboard','Admin','reviewer','any',true));resetPrototypeData();
+    rejectRequest(id,'Missing fictional details');
+    savePreviewSession(null);
+    savePreviewSession(await createStablePreviewSession('gym','Owner','+20 100 000 0987','new password',true));resetPrototypeData();
+    expect(readSampleRequest()).toMatchObject({status:'Rejected',decisionNote:'Missing fictional details'});
+    expect(() => startSampleTrial(readSampleRequest() as NonNullable<ReturnType<typeof readSampleRequest>>)).toThrow();
+    savePreviewSession(await createStablePreviewSession('dashboard','Admin','reviewer','any',true));resetPrototypeData();
+    approveRequest(id);
+    const approved=getDemoState().gyms.find(g=>g.email===gym.scenarioKey);
+    if(!approved)throw new Error('Missing approved gym');
+    setGymStatus(approved.id,'Frozen','Fictional freeze reason');
+    savePreviewSession(gym);resetPrototypeData();
+    expect(readSampleRequest()?.status).toBe('Approved');
+    expect(getDemoState().gyms.find(g=>g.id===approved.id)).toMatchObject({status:'Frozen',freezeNote:'Fictional freeze reason'});
+    savePreviewSession(await createStablePreviewSession('dashboard','Admin','reviewer','any',true));resetPrototypeData();
+    setGymStatus(approved.id,'Active');resetPrototypeData();
+    expect(getDemoState().gyms.find(g=>g.id===approved.id)?.status).toBe('Active');
+    expect(localStorage.getItem('ironhaus-demo-data-v1')).toBe('legacy untouched');
   });
 });

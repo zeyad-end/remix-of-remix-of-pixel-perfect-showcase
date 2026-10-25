@@ -1,4 +1,0 @@
-ALTER POLICY gym_reporting_read ON public.gym_subscription_events USING(public.gym_access(gym_id,'Dashboard') OR public.gym_access(gym_id,'Members'));
-CREATE OR REPLACE FUNCTION public.gym_reporting_events(g uuid) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF NOT (public.gym_access(g,'Dashboard') OR public.gym_access(g,'Members')) THEN RAISE EXCEPTION 'Gym reporting access required'; END IF; RETURN coalesce((SELECT jsonb_agg(jsonb_build_object('id',id,'memberId',member_record_id,'date',occurred_on,'price',price,'kind',event_type) ORDER BY occurred_at) FROM public.gym_subscription_events WHERE gym_id=g),'[]'::jsonb); END $$;
-REVOKE ALL ON FUNCTION public.gym_reporting_events(uuid) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.gym_reporting_events(uuid) TO authenticated, service_role;

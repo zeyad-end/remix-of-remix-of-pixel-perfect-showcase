@@ -1,4 +1,0 @@
-CREATE POLICY ironhaus_image_read ON storage.objects FOR SELECT TO authenticated USING(bucket_id='ironhaus-images' AND public.otp_verified());
-CREATE POLICY ironhaus_image_insert ON storage.objects FOR INSERT TO authenticated WITH CHECK(bucket_id='ironhaus-images' AND public.otp_verified() AND (storage.foldername(name))[1]=auth.uid()::text);
-CREATE POLICY ironhaus_image_update ON storage.objects FOR UPDATE TO authenticated USING(bucket_id='ironhaus-images' AND (storage.foldername(name))[1]=auth.uid()::text AND public.otp_verified()) WITH CHECK(bucket_id='ironhaus-images' AND (storage.foldername(name))[1]=auth.uid()::text);
-CREATE POLICY ironhaus_image_delete ON storage.objects FOR DELETE TO authenticated USING(bucket_id='ironhaus-images' AND (storage.foldername(name))[1]=auth.uid()::text AND public.otp_verified());

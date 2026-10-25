@@ -1,1 +1,0 @@
-CREATE OR REPLACE FUNCTION public.guard_account_lifecycle() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$ BEGIN IF auth.uid() IS NOT NULL AND NEW.disabled_at IS DISTINCT FROM OLD.disabled_at AND NOT public.is_super_admin() THEN RAISE EXCEPTION 'Account status is administrator managed'; END IF; RETURN NEW; END $$;

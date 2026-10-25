@@ -1,4 +1,0 @@
-CREATE FUNCTION public.canonical_member_gyvora_id() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE permanent text; BEGIN IF NEW.kind='members' AND NEW.client_id IS NOT NULL THEN SELECT gyvora_id INTO permanent FROM public.profiles WHERE id=NEW.client_id; NEW.data:=NEW.data || jsonb_build_object('gyvoraId',permanent); END IF; RETURN NEW; END $$;
-REVOKE ALL ON FUNCTION public.canonical_member_gyvora_id() FROM PUBLIC,anon,authenticated;
-CREATE TRIGGER canonical_member_gyvora_id BEFORE INSERT OR UPDATE ON public.gym_records FOR EACH ROW EXECUTE FUNCTION public.canonical_member_gyvora_id();
-UPDATE public.gym_records r SET data=r.data || jsonb_build_object('gyvoraId',p.gyvora_id) FROM public.profiles p WHERE r.kind='members' AND r.client_id=p.id AND p.gyvora_id IS NOT NULL;

@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "404da193-242d-4e55-9be1-d84da3b0cb27",
-  "project_id": "71a92627-fbf7-47a3-968a-24644500cf3b",
-  "url": "/__l5e/assets-v1/404da193-242d-4e55-9be1-d84da3b0cb27/gyvora-login-hero.jpg",
-  "r2_key": "a/v1/71a92627-fbf7-47a3-968a-24644500cf3b/404da193-242d-4e55-9be1-d84da3b0cb27/gyvora-login-hero.jpg",
-  "original_filename": "gyvora-login-hero.jpg",
-  "size": 77146,
   "content_type": "image/jpeg",
-  "created_at": "2026-10-22T09:41:10Z"
+  "created_at": "2026-10-22T09:41:10Z",
+  "original_filename": "gyvora-login-hero.jpg",
+  "project_id": "11e61e20-504a-41bf-909a-5fd340e381d7",
+  "r2_key": "a/v1/11e61e20-504a-41bf-909a-5fd340e381d7/404da193-242d-4e55-9be1-d84da3b0cb27/gyvora-login-hero.jpg",
+  "size": 77146,
+  "url": "/__l5e/assets-v1/404da193-242d-4e55-9be1-d84da3b0cb27/gyvora-login-hero.jpg",
+  "version": 1
 }

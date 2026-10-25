@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "4b7e1af7-57b1-4409-9366-5b677a17140e",
-  "project_id": "71a92627-fbf7-47a3-968a-24644500cf3b",
-  "url": "/__l5e/assets-v1/4b7e1af7-57b1-4409-9366-5b677a17140e/gyvora-logo.png",
-  "r2_key": "a/v1/71a92627-fbf7-47a3-968a-24644500cf3b/4b7e1af7-57b1-4409-9366-5b677a17140e/gyvora-logo.png",
-  "original_filename": "gyvora-logo.png",
-  "size": 242036,
   "content_type": "image/png",
-  "created_at": "2026-10-22T09:41:08Z"
+  "created_at": "2026-10-22T09:41:08Z",
+  "original_filename": "gyvora-logo.png",
+  "project_id": "11e61e20-504a-41bf-909a-5fd340e381d7",
+  "r2_key": "a/v1/11e61e20-504a-41bf-909a-5fd340e381d7/4b7e1af7-57b1-4409-9366-5b677a17140e/gyvora-logo.png",
+  "size": 242036,
+  "url": "/__l5e/assets-v1/4b7e1af7-57b1-4409-9366-5b677a17140e/gyvora-logo.png",
+  "version": 1
 }

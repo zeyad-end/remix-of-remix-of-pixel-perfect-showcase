@@ -14,6 +14,8 @@ import { clearPrototypeStorage } from '@/lib/prototype-storage';
 import cover from "@/assets/gyvora-login-hero.jpg.asset.json";
 import { AppBrand } from '@/components/AppBrand';
 import { SocialSignIn } from "@/components/SocialSignIn";
+import { supabase } from '@/integrations/supabase/client';
+import { resolveDestination } from '@/lib/post-login';
 
 export const Route = createFileRoute("/")({
   head: () => ({meta: [...seo("Login prototype", "Review GYVORA Gym, Client and Administrator designs with simulated login and no real account access.").meta, {property:"og:image",content:cover.url},{name:"twitter:image",content:cover.url}]}),
@@ -103,8 +105,8 @@ function Login() {
           <AppBrand large className="mb-8" />
           <h1 className="text-3xl font-semibold">Welcome back</h1>
           <p className="mt-1 text-sm text-muted-foreground">Sign in to your account</p>
-          <p role="status" className="mt-3 text-sm text-muted-foreground">Prototype only — no real account or verification is created</p>
-          {created && <p className="mt-3 text-sm text-success">Prototype account-creation flow completed.</p>}
+          <p role="status" className="mt-3 text-sm text-muted-foreground">Saved accounts sign in with their email and password. In this preview, any other non-empty details open an isolated prototype.</p>
+          {created && <p className="mt-3 text-sm text-success">Account created — sign in with your email and password.</p>}
 
           <div className="mt-8"><AccountTypeSelector value={destination} onChange={setDestination} dashboard/></div>
 

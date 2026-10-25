@@ -9,8 +9,17 @@ const memory: Storage = {
   removeItem: key => { values.delete(key); },
   setItem: (key, value) => { values.set(key, value); },
 };
-// Existing demo helpers use a separate ephemeral store during visual review.
+const prefix = 'gyvora-isolated-prototype:';
+const persistent: Storage = {
+  get length() { return Object.keys(localStorage).filter(key => key.startsWith(prefix)).length; },
+  clear: () => { Object.keys(localStorage).filter(key => key.startsWith(prefix)).forEach(key => localStorage.removeItem(key)); },
+  getItem: key => localStorage.getItem(prefix + key),
+  key: index => Object.keys(localStorage).filter(key => key.startsWith(prefix))[index]?.slice(prefix.length) ?? null,
+  removeItem: key => localStorage.removeItem(prefix + key),
+  setItem: (key, value) => localStorage.setItem(prefix + key, value),
+};
+// Shared across fictional roles in this browser, never the legacy/account store.
 export function prototypeStorage(): Storage {
-  return readPreviewSession() ? memory : localStorage;
+  return readPreviewSession() ? persistent : localStorage;
 }
 export function clearPrototypeStorage() { memory.clear(); }

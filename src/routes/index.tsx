@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { seo } from "@/lib/seo";
-import { createPreviewSession, prototypeContactKey, savePreviewSession, type PreviewAccountType } from '@/lib/preview-session';
-import { readSampleRequest, saveSampleRequest } from '@/lib/prototype-scenario';
+import { createStablePreviewSession, savePreviewSession, type PreviewAccountType } from '@/lib/preview-session';
+import { readSampleRequest, prototypeTrialActive } from '@/lib/prototype-scenario';
 import { AccountTypeSelector } from '@/components/AccountTypeSelector';
 import { resetPrototypeData } from "@/lib/demo";
 import { clearPrototypeStorage } from '@/lib/prototype-storage';
@@ -52,7 +52,21 @@ function Login() {
     e.preventDefault();
     setBusy(true);setError('');
     try {
-      // Saved accounts sign in with their email and password first.
+      // Preview credentials never enter the real authentication flow.
+      if (import.meta.env.DEV) {
+        const contact = destination === 'gym' ? phone.trim() || email.trim() : email.trim();
+        const session = await createStablePreviewSession(destination,name,contact,password,true);
+        await router.options.context.queryClient.cancelQueries();
+        router.options.context.queryClient.clear();
+        savePreviewSession(session);
+        resetPrototypeData();
+        const savedRequest = destination === 'gym' ? readSampleRequest() : null;
+        await cloud.refresh();
+        setName(''); setEmail(''); setPhone(''); setPassword('');
+        const gymDestination = savedRequest?.status === 'Approved' || (savedRequest?.status === 'Pending' && prototypeTrialActive(savedRequest)) ? '/dashboard' : '/subscription-request';
+        await navigate({to:destination === 'dashboard' ? '/super-admin' : destination === 'gym' ? gymDestination : '/member'});
+        return;
+      }
       const identifier = email.trim();
       if (identifier.includes('@') && password) {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email: identifier, password });
@@ -66,24 +80,9 @@ function Login() {
           await navigate({ to: await resolveDestination() });
           return;
         }
-        if (!import.meta.env.DEV) throw new Error('Incorrect email or password.');
-      } else if (!import.meta.env.DEV) {
+        throw new Error('Incorrect email or password.');
+      } else {
         throw new Error('Sign in with your account email and password.');
-      }
-      if (import.meta.env.DEV) {
-        const contact = destination === 'gym' ? phone.trim() || email.trim() : email.trim();
-        const session = createPreviewSession(destination,name,contact,password,true);
-        if (destination === 'gym') session.scenarioKey = await prototypeContactKey(contact);
-        await router.options.context.queryClient.cancelQueries();
-        router.options.context.queryClient.clear();
-        clearPrototypeStorage(); resetPrototypeData();
-        savePreviewSession(session);
-        const savedRequest = destination === 'gym' ? readSampleRequest() : null;
-        if (savedRequest) saveSampleRequest(savedRequest);
-        await cloud.refresh();
-        setName(''); setEmail(''); setPhone(''); setPassword('');
-        await navigate({to:destination === 'dashboard' ? '/super-admin' : destination === 'gym' ? '/subscription-request' : '/member'});
-        return;
       }
     }catch(e){setError(e instanceof Error?e.message:'Could not sign in.');}
     finally{setBusy(false);}
@@ -105,7 +104,7 @@ function Login() {
           <AppBrand large className="mb-8" />
           <h1 className="text-3xl font-semibold">Welcome back</h1>
           <p className="mt-1 text-sm text-muted-foreground">Sign in to your account</p>
-          <p role="status" className="mt-3 text-sm text-muted-foreground">Saved accounts sign in with their email and password. In this preview, any other non-empty details open an isolated prototype.</p>
+          <p role="status" className="mt-3 text-sm text-muted-foreground">{import.meta.env.DEV ? 'Prototype only — fictional credentials open saved prototype accounts, not real accounts.' : 'Sign in with your account email and password.'}</p>
           {created && <p className="mt-3 text-sm text-success">Account created — sign in with your email and password.</p>}
 
           <div className="mt-8"><AccountTypeSelector value={destination} onChange={setDestination} dashboard/></div>

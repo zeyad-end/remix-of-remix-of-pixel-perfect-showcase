@@ -12,11 +12,10 @@
 ## Application architecture
 - GYVORA IDs use a shared locked text allocator and append-only versioned registry; old reservations stay retired, demo caches migrate once, and opaque demo reservations return only IDs. Browser-local contacts and legacy account keys stay isolated.
 - Development signup uses local mock codes without provider accounts; production server send/verify boundaries fail closed until real providers are installed.
-- Prototype fixtures stay isolated: contact-digested, tab-local Pending requests share admin review; explicit wizard states and saved one-time trials guard entry/expiry. Real calls stay blocked.
+- Normal login uses provider credentials and persisted account-type/role checks in every environment; signup previews remain isolated. Saved owner requests use an authenticated atomic RPC with one row per owner and in-place rejected resubmission; explicit wizard states prevent pending-first entry for new owners.
 - User gym browsing uses the existing safe content RPC and a dashboard-styled client workspace; public projections never include management data or grant membership. Personal workout saves keep source gym/plan keys with a per-user unique index, while editable definitions remain independent.
 - Persisted staff page names grant read access and page:create/edit/delete grant independent actions in existing invitation/role permission arrays; database record triggers enforce actions, and member gym discovery includes owner-added memberships without manual directory links.
 - Admin gym deletion uses retained tombstones, an append-only deletion/restore history and the shared database entitlement predicate; reversible suspension never disables owner authentication or removes associations, while the separate permanent-account flow remains isolated.
-- Normal login validates provider credentials and the selected persisted account type; legacy local data remains isolated and cannot grant Cloud account access.
 - Existing-client memberships reuse gym_records/client_id and historical snapshots; database uniqueness and owner/approved-gym guards enforce linking, while client-owned directory links never grant access. Shared summaries expose only gym approval/plan, never billing credentials or receipts. Client portal path exceptions match /member or /member/ exactly, not /members or /memberships.
 - Shared app branding uses a reusable component backed by uploaded CDN asset pointers; gym identity and legacy storage/QR namespaces stay separate to preserve user records and permanent codes.
 - Super Admin plans, dates, notes, prices and branding extend existing prototype snapshots; assigning a plan copies its stable ID, billing type, duration and agreed prices into the gym, so catalog edits cannot change agreements. Projected billing uses saved billing types and anchored dates, with plan duration end dates exclusive, never payment receipts. Provider identities are read from authenticated accounts without substituting social sign-in for linking or fabricating demo connections.
@@ -29,7 +28,7 @@
 - Preserve TanStack routes and the UI kit; project RPC middleware attaches refreshed provider tokens, private QR lookup requires a session, and scanners await lookup results so failures stay visible.
 - Store gym records under a gym ID with permission-enforced access; keep account profiles, gym role associations, invitations and approval requests in separate tables so editable profile data never grants access.
 - Real login uses provider password auth; signup code challenges are not login sessions. `otp_verified()` remains an authenticated-session compatibility shim so existing RLS policies stay intact.
-- Login display preferences exclude passwords; local demo sessions are cleared before credential sign-in so stored fictional access cannot grant Cloud permissions.
+- Login preferences exclude passwords; clear isolated legacy/demo sessions before credential sign-in so fictional access cannot grant Cloud permissions.
 - Demo data stays isolated; member history follows changes; duplicate checks apply only to new/relinked record IDs, never edits/removals.
 
 - Locked writes preserve profiles; reports sum sessions and atomic subscription price/date events, subtracting paid invoices. Demo reports stay isolated.

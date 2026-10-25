@@ -220,119 +220,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }
   async function refresh() {
     setLoading(true);
-    const prototype = readPreviewSession();
-    if (prototype) {
-      generation.current++;
-      bindPersistence(undefined);
-      resetPrototypeData();
-      const id = demoUserId('reviewer@example.test');
-      const type = prototype.type;
-      const base = structuredClone(initialState);
-      const sampleRequest = readSampleRequest();
-      if(sampleRequest) base.gym.name = sampleRequest.gymName;
-      if (type === 'individual') {
-        base.members = base.members.slice(0, 1).map(m => ({...m, clientId: id}));
-        prototypeStorage().setItem('ironhaus-demo-gym:demo-gym', JSON.stringify(base));
-        prototypeStorage().setItem(`ironhaus-client-links:${id}`, JSON.stringify([{gymId:'demo-gym',favorite:false}]));
-      }
-      hydrateState(base);
-      setProfile({id,full_name: 'Prototype reviewer',email:'reviewer@example.test',phone:'',photo:'',account_type:type === 'gym' ? 'owner' : 'client',gyvora_id:type === 'gym' ? SAMPLE_GYM_ID : type === 'individual' ? SAMPLE_CLIENT_ID : null} as Profile);
-      setGyms(type === 'dashboard' ? [] : [{id:'demo-gym',name:base.gym.name,owner_id: id,created_at:'',frozen_at:null,freeze_note:'',deleted_at:null,deletion_note:'',deletion_history:[],gyvora_id:SAMPLE_GYM_ID}]);
-      setGymId(type === 'gym' ? 'demo-gym' : '');
-      setRole(type === 'dashboard' ? 'super_admin' : type === 'gym' ? 'Owner' : 'Client');
-      setPermissions([]); setVerified(true); setIsAdmin(false);
-      setLoading(false);
-      return;
-    }
-    if (import.meta.env.DEV) {
-      generation.current++;
-      bindPersistence(undefined);
-      setProfile(null); setGyms([]); setGymId(''); setRole(''); setPermissions([]); setVerified(false); setIsAdmin(false); setLoading(false);
-      return;
-    }
-    const info = getDemoSessionInfo();
-    const demo = info?.kind ?? null;
-    if (demo && info) {
-      generation.current++;
-      bindPersistence(undefined);
-      try { prepareDemoIdentities(); await syncDemoIdentities(reserveIds); }
-      catch(e) { toast.error(e instanceof Error ? e.message : 'Permanent demo IDs unavailable. Please refresh while online.'); }
-      const acc = info.email ? getDemoAccount() : null;
-      const id = demoUserId(info.email);
-      const associations = getDemoState().staffRoles.filter((r) => r.userId === id);
-      const p = {
-        id,
-        member_id: demoMemberId(id),
-        gyvora_id: demoMemberId(id) || null,
-        full_name:
-          info.name ||
-          acc?.name ||
-          (demo === "super"
-            ? "zeyad salama"
-            : demo === "individual"
-              ? "Demo Member"
-              : "zeyad salama1"),
-        email: demo === 'owner' && !(info.email || acc?.email || '').includes('@') ? '' : (info.email || acc?.email || ''),
-        phone: acc?.phone || '',
-        photo: "",
-        account_type: demo === "individual" ? "client" : "owner",
-      } as Profile;
-      setProfile(demo === 'owner' ? { ...p, ...(readOwnerProfile() ?? {}) } : p);
-      setVerified(true);
-      const memberGyms = associations.map((r) => ({
-        id: r.gymId,
-        name: r.gymName,
-        owner_id: "",
-        created_at: "",
-        frozen_at: null,
-        freeze_note: "",
-        deleted_at: null,
-        deletion_note: '',
-        deletion_history: [],
-        gyvora_id: demoIdentity('G',r.gymId) || '',
-      }));
-      setGyms(
-        demo === "owner"
-          ? [
-              { id: "demo-gym", name: "IRONHAUS Performance Club", owner_id: id, created_at: "", frozen_at: null, freeze_note: "", deleted_at: null, deletion_note: '', deletion_history: [], gyvora_id:demoIdentity('G','demo-gym') || '' },
-              { id: "demo-gym-north", name: "IRONHAUS North", owner_id: id, created_at: "", frozen_at: null, freeze_note: "", deleted_at: null, deletion_note: '', deletion_history: [], gyvora_id:demoIdentity('G','demo-gym-north') || '' },
-            ]
-          : demo === "individual"
-            ? memberGyms
-            : [],
-      );
-      setRole(
-        demo === "super"
-          ? "super_admin"
-          : demo === "individual"
-            ? (associations[0]?.role ?? "Client")
-            : "Owner",
-      );
-      setPermissions(demo === "individual" ? (associations[0]?.permissions ?? []) : []);
-      const active = demo === "owner" ? "demo-gym" : (memberGyms[0]?.id ?? "");
-      setGymId(active);
-      const base = readDemoGym(active, demo === "owner");
-      if (demo === "individual") {
-        hydrateState({
-          ...base,
-          members: base.members.filter((m) => m.clientId === id),
-          attendance: base.attendance.filter((e) =>
-            base.members.some((m) => m.clientId === id && m.id === e.memberId),
-          ),
-          staff: [],
-          staffAttendance: [],
-        });
-      } else hydrateState(base);
-      if (demo === 'owner') appendGymEvents(active, expirationEvents(base, localDate()));
-      if (demo === "owner")
-        bindPersistence(async (changes) => {
-          const next = { ...getState(), ...changes };
-          writeDemoGym(active, next);
-          hydrateState(next);
-        });
-      setLoading(false);
-      return;
-    }
+    savePreviewSession(null);
+    setDemoSession(null);
     try {
       const {
         data: { user },
@@ -367,9 +256,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
           .eq("role", "super_admin")
           .maybeSingle();
         setIsAdmin(!!admin);
-        if (admin) setRole("super_admin");
+        setRole(admin ? "super_admin" : p.account_type === "owner" ? "Owner" : "Client");
       }
     } catch (e) {
+      generation.current++; bindPersistence(undefined); setProfile(null); setGyms([]); setGymId(""); setRole(""); setPermissions([]); setIsAdmin(false); setVerified(false);
       toast.error(e instanceof Error ? e.message : "Could not load your account");
     } finally {
       setLoading(false);
@@ -377,7 +267,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }
   useEffect(() => {
     void refresh();
-    if (import.meta.env.DEV) return () => bindPersistence(undefined);
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
@@ -453,74 +343,6 @@ export function AccessBoundary({ children }: { children: ReactNode }) {
   const publicPaths = ["/", "/register", "/auth", "/reset-password", "/forgot-password", "/client-sign-in", "/demo-signup", "/demo-recovery"];
   if (publicPaths.includes(path)) return children;
   if (!hydrated) return <div className="p-12 text-muted-foreground">Loading your account…</div>;
-  const preview = readPreviewSession();
-  if (preview) {
-    if (c.loading || !c.profile) return <div className="p-12 text-muted-foreground">Opening prototype…</div>;
-    const allowed = preview.type === 'dashboard' ? path.startsWith('/super-admin') : preview.type === 'individual' ? isClientPortalPath(path) : !path.startsWith('/super-admin') && !isClientPortalPath(path);
-    const content = preview.type === 'gym' && path !== '/subscription-request' ? <PrototypeGymTrialBoundary>{children}</PrototypeGymTrialBoundary> : children;
-    return <><div role="status" className="border-b bg-secondary px-4 py-3 text-center text-sm text-muted-foreground">Prototype only — no real account or verification is created</div>{allowed ? content : <div className="p-12"><p>This page belongs to another prototype account type.</p><Button asChild className="mt-4"><Link to="/">Back to login</Link></Button></div>}</>;
-  }
-  if (c.loading) return <div className="p-12 text-muted-foreground">Loading your account…</div>;
-  const demo = getDemoSession();
-  if (demo === "super") {
-    if (path.startsWith("/super-admin")) return children;
-    return (
-      <div className="mx-auto max-w-md p-10">
-        <h1 className="text-2xl">Platform admin area</h1>
-        <Button asChild className="mt-6">
-          <Link to="/super-admin">Open dashboard</Link>
-        </Button>
-      </div>
-    );
-  }
-  if (demo === "individual") {
-    const demoFreeze = demoClientFrozen(demoUserId(getDemoSessionInfo()?.email ?? ""));
-    if (demoFreeze)
-      return (
-        <div className="mx-auto max-w-md p-10">
-          <h1 className="text-2xl">Account frozen</h1>
-          <p className="mt-2 text-muted-foreground">Your account has been frozen by the administrator. Client pages are unavailable until it is reactivated.</p>
-          {demoFreeze.note.trim() && <p className="mt-4 rounded-md border bg-card p-4 text-sm"><span className="font-medium">Reason: </span>{demoFreeze.note}</p>}
-          <Button className="mt-6" onClick={() => void c.logout()}>Log out</Button>
-        </div>
-      );
-    if (isClientPortalPath(path) || path === "/gyms") return children;
-    return (
-      <div className="mx-auto max-w-md p-10">
-        <h1 className="text-2xl">Member area</h1>
-        <Button asChild className="mt-6">
-          <Link to="/member">My account</Link>
-        </Button>
-      </div>
-    );
-  }
-  if (demo === "owner") {
-    if (path.startsWith("/super-admin"))
-      return <div className="p-12">Administrator access required.</div>;
-    const acc = getDemoAccount();
-    if(acc?.deletedAt || getDemoState().gyms.some(g=>g.email===acc?.email&&(g.deletedAt||g.status==='Frozen')))return <DemoOwnerGate logout={c.logout}>{children}</DemoOwnerGate>;
-    if (
-      acc &&
-      !demoOwnerHasAccess(acc) &&
-      path !== "/subscription-request" &&
-      !isClientPortalPath(path) &&
-      path !== "/gyms"
-    )
-      return (
-        <div className="mx-auto max-w-md p-10">
-          <h1 className="text-2xl">{demoRequestStatus(acc.email) === "Rejected" ? "Subscription request rejected" : "Subscription approval pending"}</h1>
-          <p className="mt-2 text-muted-foreground">
-            {demoRequestStatus(acc.email) === "Rejected" ? "Your request was rejected, so the Gym Owner dashboard is unavailable. Contact the administrator." : "The Gym Owner dashboard is unavailable until your subscription request is approved."}
-          </p>
-          <Button asChild className="mt-6">
-            <Link to="/subscription-request">View subscription</Link>
-          </Button>
-        </div>
-      );
-    if (acc?.skipped && demoRequestStatus(acc.email) === "Pending" && !isClientPortalPath(path) && path !== "/subscription-request")
-      return <DemoOwnerGate logout={c.logout}>{children}</DemoOwnerGate>;
-    return children;
-  }
   if (c.loading) return <div className="p-12 text-muted-foreground">Loading your account…</div>;
   if (!c.profile)
     return (

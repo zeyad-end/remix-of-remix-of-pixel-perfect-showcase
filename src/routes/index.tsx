@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { seo } from "@/lib/seo";
-import { createPreviewSession, prototypeContactKey, savePreviewSession, type PreviewAccountType } from '@/lib/preview-session';
-import { readSampleRequest, saveSampleRequest } from '@/lib/prototype-scenario';
+import { savePreviewSession, type PreviewAccountType } from '@/lib/preview-session';
+import { supabase } from '@/integrations/supabase/client';
+import { matchesLoginType } from '@/lib/saved-login';
+import { setDemoSession } from '@/lib/demo';
 import { AccountTypeSelector } from '@/components/AccountTypeSelector';
 import { resetPrototypeData } from "@/lib/demo";
 import { clearPrototypeStorage } from '@/lib/prototype-storage';
@@ -16,7 +18,7 @@ import { AppBrand } from '@/components/AppBrand';
 import { SocialSignIn } from "@/components/SocialSignIn";
 
 export const Route = createFileRoute("/")({
-  head: () => ({meta: [...seo("Login prototype", "Review GYVORA Gym, Client and Administrator designs with simulated login and no real account access.").meta, {property:"og:image",content:cover.url},{name:"twitter:image",content:cover.url}]}),
+  head: () => ({meta: [...seo("Login", "Sign in to your saved GYVORA Gym, Client or Administrator account.").meta, {property:"og:image",content:cover.url},{name:"twitter:image",content:cover.url}]}),
   validateSearch: (search: Record<string, unknown>): { created?: boolean } => ({created: search["created"] === true || search["created"] === "true"}),
   component: Login,
 });
@@ -49,21 +51,24 @@ function Login() {
     e.preventDefault();
     setBusy(true);setError('');
     try {
-      if (import.meta.env.DEV) {
-        const session = createPreviewSession(destination,name,email,password,true);
-        if (destination === 'gym') session.scenarioKey = await prototypeContactKey(email);
-        await router.options.context.queryClient.cancelQueries();
-        router.options.context.queryClient.clear();
-        clearPrototypeStorage(); resetPrototypeData();
-        savePreviewSession(session);
-        const savedRequest = destination === 'gym' ? readSampleRequest() : null;
-        if (savedRequest) saveSampleRequest(savedRequest);
-        await cloud.refresh();
-        setName(''); setEmail(''); setPassword('');
-        await navigate({to:destination === 'dashboard' ? '/super-admin' : destination === 'gym' ? '/subscription-request' : '/member'});
-        return;
+      if (!email.trim() || !password) throw new Error('Enter your email and password.');
+      savePreviewSession(null); setDemoSession(null);
+      await router.options.context.queryClient.cancelQueries();
+      router.options.context.queryClient.clear();
+      clearPrototypeStorage(); resetPrototypeData();
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({email:email.trim(),password});
+      if (loginError || !data.user) throw new Error('Incorrect email or password.');
+      const [{data:profile,error:profileError},{data:admin}] = await Promise.all([
+        supabase.from('profiles').select('account_type,disabled_at').eq('id',data.user.id).single(),
+        supabase.rpc('is_super_admin'),
+      ]);
+      if (profileError || !profile || profile.disabled_at || !matchesLoginType(destination,profile.account_type,!!admin)) {
+        await supabase.auth.signOut();
+        throw new Error(profileError ? 'Your saved account profile is unavailable. Account setup is required.' : 'This account is unavailable or does not match the selected account type.');
       }
-      throw new Error('Prototype only — no real account or verification is created. Dashboard navigation is available in development preview.');
+      await cloud.refresh();
+      setName(''); setEmail(''); setPassword('');
+      await navigate({to:destination === 'dashboard' ? '/super-admin' : destination === 'gym' ? '/subscription-request' : '/member'});
     }catch(e){setError(e instanceof Error?e.message:'Could not sign in.');}
     finally{setBusy(false);}
   }
@@ -84,16 +89,16 @@ function Login() {
           <AppBrand large className="mb-8" />
           <h1 className="text-3xl font-semibold">Welcome back</h1>
           <p className="mt-1 text-sm text-muted-foreground">Sign in to your account</p>
-          <p role="status" className="mt-3 text-sm text-muted-foreground">Prototype only — no real account or verification is created</p>
-          {created && <p className="mt-3 text-sm text-success">Prototype account-creation flow completed.</p>}
+          
+          {created && <p className="mt-3 text-sm text-success">Account-creation preview completed; no saved account was created.</p>}
 
           <div className="mt-8"><AccountTypeSelector value={destination} onChange={setDestination} dashboard/></div>
 
           <form className="mt-6 space-y-4" onSubmit={signIn} noValidate>
             <div className="space-y-2"><Label htmlFor="demo-name">Name</Label><Input id="demo-name" name="name" value={name} onChange={e => setName(e.target.value)} autoComplete="name" className="h-11 bg-card" /></div>
             <div className="space-y-2">
-              <Label htmlFor="demo-email">Email or phone</Label>
-              <Input id="demo-email" name="identifier" type="text" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" placeholder="Email or phone with country code" className="h-11 bg-card" />
+              <Label htmlFor="demo-email">Email</Label>
+              <Input id="demo-email" name="identifier" type="text" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" placeholder="Email address" className="h-11 bg-card" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="demo-password">Password</Label>
@@ -102,7 +107,7 @@ function Login() {
             <Link to="/forgot-password" className="block text-xs text-primary hover:underline">Forgot password?</Link>
             <div className="flex items-center gap-2"><Checkbox id="demo-remember" checked={remember} onCheckedChange={value => setRemember(value === true)} /><Label htmlFor="demo-remember" className="text-sm font-normal">Remember Me</Label></div>
             {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={busy || !hydrated} className="h-11 w-full">{busy?'Opening prototype…':'Login'}</Button>
+            <Button type="submit" disabled={busy || !hydrated} className="h-11 w-full">{busy?'Signing in…':'Login'}</Button>
           </form>
           <SocialSignIn prototype />
           <p className="mt-6 text-center text-sm text-muted-foreground">

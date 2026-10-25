@@ -1,6 +1,6 @@
 import { generateId } from './utils';
 
-export type PreviewAccountType = 'gym' | 'individual';
+export type PreviewAccountType = 'gym' | 'individual' | 'dashboard';
 export type PreviewSession = { id: string; type: PreviewAccountType; name: string };
 const key = 'gyvora-isolated-preview-session';
 
@@ -10,16 +10,16 @@ export function previewEnabled(developmentBuild: boolean, runtimeMode?: string) 
 
 export function createPreviewSession(type: string, name: string, identifier: string, password: string, enabled: boolean): PreviewSession {
   if (!enabled) throw new Error('Preview login is unavailable.');
-  if (type !== 'gym' && type !== 'individual') throw new Error('Administrator access is unavailable in preview quick login.');
+  if (!['gym', 'individual', 'dashboard'].includes(type)) throw new Error('Choose a prototype account type.');
   if (![name, identifier, password].every(value => value.trim())) throw new Error('Enter your name, email or phone, and password.');
-  return { id: `preview-${generateId()}`, type, name: name.trim() };
+  return { id: `preview-${generateId()}`, type: type as PreviewAccountType, name: 'Prototype reviewer' };
 }
 
 export function readPreviewSession(): PreviewSession | null {
   if (!import.meta.env.DEV || typeof window === 'undefined') return null;
   try {
     const value = JSON.parse(sessionStorage.getItem(key) ?? 'null');
-    return value?.id?.startsWith('preview-') && ['gym', 'individual'].includes(value.type) && typeof value.name === 'string' ? value : null;
+    return value?.id?.startsWith('preview-') && ['gym', 'individual', 'dashboard'].includes(value.type) && typeof value.name === 'string' ? value : null;
   } catch { return null; }
 }
 

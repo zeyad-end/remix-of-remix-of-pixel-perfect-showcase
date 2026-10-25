@@ -1,11 +1,18 @@
 import { generateId } from './utils';
 
 export type PreviewAccountType = 'gym' | 'individual' | 'dashboard';
-export type PreviewSession = { id: string; type: PreviewAccountType; name: string };
+export type PreviewSession = { id: string; type: PreviewAccountType; name: string; scenarioKey?: string };
 const key = 'gyvora-isolated-preview-session';
 
 export function previewEnabled(developmentBuild: boolean, runtimeMode?: string) {
   return developmentBuild && runtimeMode !== 'production';
+}
+
+// A prototype-only digest groups fictional requests, never authenticates an account.
+export async function prototypeContactKey(contact: string) {
+  const normalized = contact.includes('@') ? contact.trim().toLowerCase() : contact.trim().replace(/[\s()+.-]/g, '');
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalized));
+  return `fictional-${Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('')}`;
 }
 
 export function createPreviewSession(type: string, name: string, identifier: string, password: string, enabled: boolean): PreviewSession {

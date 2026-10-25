@@ -18,6 +18,7 @@ import { trialActive, trialExpired, trialRemainingMs, formatRemaining, type Owne
 import { whatsappLink } from '@/lib/demo';
 import { MessageCircle } from 'lucide-react';
 import { DemoOwnerGate } from './DemoOwnerGate';
+import { PrototypeGymTrialBoundary } from './PrototypeGymTrialBoundary';
 import { reserveDemoIdentities } from '@/lib/demo-identities.functions';
 import { syncDemoIdentities, demoIdentity } from '@/lib/demo-identities';
 import { readPreviewSession, savePreviewSession } from '@/lib/preview-session';
@@ -456,7 +457,8 @@ export function AccessBoundary({ children }: { children: ReactNode }) {
   if (preview) {
     if (c.loading || !c.profile) return <div className="p-12 text-muted-foreground">Opening prototype…</div>;
     const allowed = preview.type === 'dashboard' ? path.startsWith('/super-admin') : preview.type === 'individual' ? isClientPortalPath(path) : !path.startsWith('/super-admin') && !isClientPortalPath(path);
-    return <><div role="status" className="border-b bg-secondary px-4 py-3 text-center text-sm text-muted-foreground">Prototype only — no real account or verification is created</div>{allowed ? children : <div className="p-12"><p>This page belongs to another prototype account type.</p><Button asChild className="mt-4"><Link to="/">Back to login</Link></Button></div>}</>;
+    const content = preview.type === 'gym' && path !== '/subscription-request' ? <PrototypeGymTrialBoundary>{children}</PrototypeGymTrialBoundary> : children;
+    return <><div role="status" className="border-b bg-secondary px-4 py-3 text-center text-sm text-muted-foreground">Prototype only — no real account or verification is created</div>{allowed ? content : <div className="p-12"><p>This page belongs to another prototype account type.</p><Button asChild className="mt-4"><Link to="/">Back to login</Link></Button></div>}</>;
   }
   if (c.loading) return <div className="p-12 text-muted-foreground">Loading your account…</div>;
   const demo = getDemoSession();

@@ -17,7 +17,9 @@ export const Route = createFileRoute('/register')({
 });
 function Register() {
   const hydrated = useHydrated();
+  const navigate = useNavigate();
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const [accountType, setAccountType] = useState<'gym' | 'individual'>('gym');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -35,8 +37,29 @@ function Register() {
     setChallenge({channel,contact,expiresAt:Date.now()+600000});setVerified(false);setCode('');setError('');
   }
   function verify() {
-    try {verifyPreviewSignup(challenge,challenge?.channel === 'email' ? email : phone,code,true);setVerified(true);setError('');}
+    try {verifyPreviewSignup(challenge,challenge?.channel === 'email' ? email : phone,code,import.meta.env.DEV);setVerified(true);setError('');}
     catch(e) {setError(e instanceof Error ? e.message : 'Enter a sample code.');}
+  }
+  async function createAccount(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fullName = String(new FormData(form).get('full_name') ?? '').trim();
+    const password = String(new FormData(form).get('password') ?? '');
+    if (!fullName) {setError('Enter your full name.');return;}
+    if (!email.trim()) {setError('Enter an email address — it is your sign-in identifier.');return;}
+    if (!verified) {setError('Send a simulated code and select Verify first.');return;}
+    setBusy(true);setError('');
+    try {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { data: { full_name: fullName, phone: phone.trim(), account_type: accountType === 'gym' ? 'owner' : 'client' } },
+      });
+      if (signUpError) throw signUpError;
+      await supabase.auth.signOut();
+      form.reset();setEmail('');setPhone('');setCode('');setChallenge(null);setSuccess(true);
+    } catch (err) {setError(err instanceof Error ? err.message : 'Could not create the account. Please try again.');}
+    finally {setBusy(false);}
   }
   return <div className="flex min-h-screen items-center justify-center px-6 py-12"><div className="w-full max-w-lg">
     <AppBrand large className="mb-8"/>

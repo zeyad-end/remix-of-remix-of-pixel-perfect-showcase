@@ -1,6 +1,6 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useHydrated, useRouter } from "@tanstack/react-router";
 import { useCloud } from "@/components/CloudProvider";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,17 +8,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { seo } from "@/lib/seo";
 import { createPreviewSession, savePreviewSession, type PreviewAccountType } from '@/lib/preview-session';
 import { AccountTypeSelector } from '@/components/AccountTypeSelector';
-import { getPrototypePreference, savePrototypePreference } from "@/lib/prototype-login";
-import { supabase } from "@/integrations/supabase/client";
-import { setDemoSession } from "@/lib/demo";
-import { resolveDestination } from "@/lib/post-login";
-import { matchesAccountType, normalizeContact } from "@/lib/signup-verifier";
+import { resetPrototypeData } from "@/lib/demo";
+import { clearPrototypeStorage } from '@/lib/prototype-storage';
 import cover from "@/assets/gyvora-login-hero.jpg.asset.json";
 import { AppBrand } from '@/components/AppBrand';
 import { SocialSignIn } from "@/components/SocialSignIn";
 
 export const Route = createFileRoute("/")({
-  head: () => ({meta: [...seo("Login", "Sign in to your GYVORA gym or client account with your email or phone and password.").meta, {property:"og:image",content:cover.url},{name:"twitter:image",content:cover.url}]}),
+  head: () => ({meta: [...seo("Login prototype", "Review GYVORA Gym, Client and Administrator designs with simulated login and no real account access.").meta, {property:"og:image",content:cover.url},{name:"twitter:image",content:cover.url}]}),
   validateSearch: (search: Record<string, unknown>): { created?: boolean } => ({created: search["created"] === true || search["created"] === "true"}),
   component: Login,
 });
@@ -39,27 +36,13 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
-  const [ready, setReady] = useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const navigate = useNavigate();
   const cloud = useCloud();
+  const hydrated = useHydrated();
+  const router = useRouter();
   const { created } = Route.useSearch();
-
-  useEffect(() => {
-    const preference = getPrototypePreference();
-    if (preference) {
-      setDestination(preference.destination === 'individual' ? 'individual' : 'gym');
-      setName(preference.name);
-      setEmail(preference.email);
-      setRemember(true);
-    }
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (ready) savePrototypePreference({ destination, name, email }, remember);
-  }, [destination, name, email, remember, ready]);
 
   async function signIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -67,29 +50,16 @@ function Login() {
     try {
       if (import.meta.env.DEV) {
         const session = createPreviewSession(destination,name,email,password,true);
-        await cloud.logout();
-        // Remove any provider session before entering the isolated workspace.
-        await supabase.auth.signOut({scope:'local'});
+        await router.options.context.queryClient.cancelQueries();
+        router.options.context.queryClient.clear();
+        clearPrototypeStorage(); resetPrototypeData();
         savePreviewSession(session);
         await cloud.refresh();
-        await navigate({to:destination === 'gym' ? '/dashboard' : '/member'});
+        setName(''); setEmail(''); setPassword('');
+        await navigate({to:destination === 'dashboard' ? '/super-admin' : destination === 'gym' ? '/dashboard' : '/member'});
         return;
       }
-      savePreviewSession(null);
-      setDemoSession(null);
-      const identifier=email.trim();
-      if (!identifier || !password) throw new Error('Enter your email or phone and password.');
-      const credential=identifier.includes('@') ? {email:identifier.toLowerCase(),password} : {phone:normalizeContact('phone',identifier),password};
-      const result=await supabase.auth.signInWithPassword(credential);
-      if(result.error || !result.data.user) throw new Error('Sign-in failed. Check your email or phone and password.');
-      const user=result.data.user;
-      const [profile, roles]=await Promise.all([supabase.from('profiles').select('account_type,disabled_at').eq('id',user.id).single(),supabase.from('user_roles').select('role').eq('user_id',user.id)]);
-      if(profile.error || roles.error || !profile.data || !matchesAccountType(destination,profile.data.account_type,roles.data?.some(r=>r.role==='super_admin') ?? false)) {
-        await supabase.auth.signOut(); throw new Error('Choose the account type registered for these credentials.');
-      }
-      if(profile.data.disabled_at){await supabase.auth.signOut();throw new Error('This account has been deactivated.');}
-      savePrototypePreference({destination,name,email},remember);
-      await cloud.refresh();await navigate({to:await resolveDestination()});
+      throw new Error('Prototype only — no real account or verification is created. Dashboard navigation is available in development preview.');
     }catch(e){setError(e instanceof Error?e.message:'Could not sign in.');}
     finally{setBusy(false);}
   }
@@ -110,9 +80,10 @@ function Login() {
           <AppBrand large className="mb-8" />
           <h1 className="text-3xl font-semibold">Welcome back</h1>
           <p className="mt-1 text-sm text-muted-foreground">Sign in to your account</p>
-          {created && <p role="status" className="mt-3 text-sm text-success">{import.meta.env.DEV ? 'Preview signup completed. No real account was created.' : 'Account created. Sign in with your email or phone and password.'}</p>}
+          <p role="status" className="mt-3 text-sm text-muted-foreground">Prototype only — no real account or verification is created</p>
+          {created && <p className="mt-3 text-sm text-success">Prototype account-creation flow completed.</p>}
 
-          <div className="mt-8"><AccountTypeSelector value={destination} onChange={setDestination}/></div>
+          <div className="mt-8"><AccountTypeSelector value={destination} onChange={setDestination} dashboard/></div>
 
           <form className="mt-6 space-y-4" onSubmit={signIn} noValidate>
             <div className="space-y-2"><Label htmlFor="demo-name">Name</Label><Input id="demo-name" name="name" value={name} onChange={e => setName(e.target.value)} autoComplete="name" className="h-11 bg-card" /></div>
@@ -127,9 +98,9 @@ function Login() {
             <Link to="/forgot-password" className="block text-xs text-primary hover:underline">Forgot password?</Link>
             <div className="flex items-center gap-2"><Checkbox id="demo-remember" checked={remember} onCheckedChange={value => setRemember(value === true)} /><Label htmlFor="demo-remember" className="text-sm font-normal">Remember Me</Label></div>
             {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={busy} className="h-11 w-full">{busy?'Signing in…':'Login'}</Button>
+            <Button type="submit" disabled={busy || !hydrated} className="h-11 w-full">{busy?'Opening prototype…':'Login'}</Button>
           </form>
-          <SocialSignIn />
+          <SocialSignIn prototype />
           <p className="mt-6 text-center text-sm text-muted-foreground">
             New here? <Link to="/register" className="text-primary hover:underline">Create account</Link>
           </p>

@@ -20,11 +20,12 @@ const AppleIcon = () => (
   </svg>
 );
 /** Optional social sign-in; only provider-confirmed sessions count as success. */
-export function SocialSignIn() {
+export function SocialSignIn({prototype = false}: {prototype?: boolean}) {
   const [busy, setBusy] = useState("");
   const navigate = useNavigate();
 
   async function start(provider: "google" | "apple") {
+    if (prototype) { toast.info('Prototype only — social sign-in is not connected.'); return; }
     setBusy(provider);
     try {
       const { data } = await supabase.auth.getUser();

@@ -1,3 +1,5 @@
+import { readPreviewSession } from './preview-session';
+import { prototypeStorage } from './prototype-storage';
 import { useSyncExternalStore } from "react";
 import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
@@ -31,8 +33,10 @@ export type DemoSessionInfo = {
 };
 
 export function getDemoSessionInfo(): DemoSessionInfo | null {
+  const prototype = readPreviewSession();
+  if (prototype) return { kind: prototype.type === 'dashboard' ? 'super' : prototype.type === 'gym' ? 'owner' : 'individual', email: 'reviewer@example.test', name: 'Prototype reviewer', directAccess: true };
   try {
-    const v = localStorage.getItem(SESSION_KEY);
+    const v = prototypeStorage().getItem(SESSION_KEY);
     if (!v) return null;
     if (v === "super" || v === "owner") return { kind: v, email: "" }; // legacy hardcoded demo accounts
     const o = JSON.parse(v) as DemoSessionInfo;
@@ -54,10 +58,10 @@ export function setDemoSession(
   try {
     if (s) {
       email = email.trim().toLowerCase();
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ kind: s, email, ...details }));
+      prototypeStorage().setItem(SESSION_KEY, JSON.stringify({ kind: s, email, ...details }));
       if(s==='individual') rememberDemoClient(demoUserId(email), details.name || 'Demo Member', email, getDemoAccounts().find(a=>a.email===email)?.phone || '');
     }
-    else localStorage.removeItem(SESSION_KEY);
+    else prototypeStorage().removeItem(SESSION_KEY);
   } catch {
     /* private mode */
   }
@@ -110,7 +114,7 @@ const ACCOUNTS_KEY = "ironhaus-demo-accounts-v1";
 
 export function getDemoAccounts(): DemoAccount[] {
   try {
-    const raw = localStorage.getItem(ACCOUNTS_KEY);
+    const raw = prototypeStorage().getItem(ACCOUNTS_KEY);
     if (raw) return JSON.parse(raw) as DemoAccount[];
   } catch {
     /* corrupted storage -> empty */
@@ -120,7 +124,7 @@ export function getDemoAccounts(): DemoAccount[] {
 
 function saveAccounts(list: DemoAccount[]) {
   try {
-    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
+    prototypeStorage().setItem(ACCOUNTS_KEY, JSON.stringify(list));
   } catch {
     /* storage unavailable */
   }
@@ -299,23 +303,23 @@ export function demoMemberId(userId: string): string {
 }
 type LocalClient = {id:string;full_name:string;email:string;phone:string};
 function localClients(): LocalClient[] {
-  return JSON.parse(localStorage.getItem('gyvora-demo-client-directory') ?? '[]') as LocalClient[];
+  return JSON.parse(prototypeStorage().getItem('gyvora-demo-client-directory') ?? '[]') as LocalClient[];
 }
 export function rememberDemoClient(id:string,name:string,email:string,phone:string) {
   const rows=localClients();
   const previous=rows.find(r=>r.id===id);
   const row={id,full_name:name || previous?.full_name || 'Demo Member',email,phone:phone || previous?.phone || ''};
-  localStorage.setItem('gyvora-demo-client-directory',JSON.stringify([...rows.filter(r=>r.id!==id),row]));
+  prototypeStorage().setItem('gyvora-demo-client-directory',JSON.stringify([...rows.filter(r=>r.id!==id),row]));
   ensureDemoIdentity('C',id);
 }
 export function prepareDemoIdentities() {
   for(const gym of [{id:'demo-gym'},{id:'demo-gym-north'},...getDemoState().gyms]) ensureDemoIdentity('G',gym.id);
   for(const client of getDemoState().clients) rememberDemoClient(client.id,client.name,'',client.phone);
   for(const account of getDemoAccounts()) if(account.type==='individual') rememberDemoClient(demoUserId(account.email),account.name,account.email,account.phone || '');
-  const legacy=JSON.parse(localStorage.getItem('ironhaus-demo-member-identities') ?? '{}') as Record<string,string>;
+  const legacy=JSON.parse(prototypeStorage().getItem('ironhaus-demo-member-identities') ?? '{}') as Record<string,string>;
   for(const userId of Object.keys(legacy)) ensureDemoIdentity('C',userId);
   const gymIds=new Set(['demo-gym','demo-gym-north',...getDemoState().gyms.map(g=>g.id)]);
-  for(let i=0;i<localStorage.length;i++) { const key=localStorage.key(i); if(key?.startsWith('ironhaus-demo-gym:'))gymIds.add(key.slice('ironhaus-demo-gym:'.length)); }
+  for(let i=0;i<prototypeStorage().length;i++) { const key=prototypeStorage().key(i); if(key?.startsWith('ironhaus-demo-gym:'))gymIds.add(key.slice('ironhaus-demo-gym:'.length)); }
   for(const gymId of gymIds) {
     ensureDemoIdentity('G',gymId);
     for(const member of readDemoGym(gymId,gymId==='demo-gym').members) rememberDemoClient(member.clientId ?? demoUserId(member.email),member.name,member.email,member.phone);
@@ -326,7 +330,7 @@ export function lookupDemoClient(gymId:string,value:string) {
   const account=getDemoAccount();
   if(account&&!demoOwnerHasAccess(account))throw new Error('Gym access unavailable');
   const input=normalizeAccountLookup(value).toLowerCase();
-  const legacy=JSON.parse(localStorage.getItem('ironhaus-demo-member-identities') ?? '{}') as Record<string,string>;
+  const legacy=JSON.parse(prototypeStorage().getItem('ironhaus-demo-member-identities') ?? '{}') as Record<string,string>;
   const matches=localClients().filter(p=>p.id.toLowerCase()===input||demoIdentityMatches('C',p.id,input)||legacy[p.id]?.toLowerCase()===input||(p.email&&p.email.toLowerCase()===input)||p.full_name.toLowerCase()===input);
   if(matches.length>1)throw new Error('More than one account has this name. Use the intended GYVORA ID or email.');
   const p=matches[0];
@@ -345,7 +349,7 @@ export function readDemoMembershipHistory(userId: string): DemoMembershipHistory
   try {
     return (
       JSON.parse(
-        localStorage.getItem("ironhaus-demo-membership-history") ?? "[]",
+        prototypeStorage().getItem("ironhaus-demo-membership-history") ?? "[]",
       ) as DemoMembershipHistory[]
     ).filter((r) => r.userId === userId);
   } catch {
@@ -355,7 +359,7 @@ export function readDemoMembershipHistory(userId: string): DemoMembershipHistory
 export function rememberDemoMemberships(gymId: string, gym: string, members: State["members"]) {
   let rows: DemoMembershipHistory[] = [];
   try {
-    rows = JSON.parse(localStorage.getItem("ironhaus-demo-membership-history") ?? "[]");
+    rows = JSON.parse(prototypeStorage().getItem("ironhaus-demo-membership-history") ?? "[]");
   } catch {
     /* empty */
   }
@@ -375,7 +379,7 @@ export function rememberDemoMemberships(gymId: string, gym: string, members: Sta
       rows.push({ userId, gymId, gym, definition: structuredClone(m) });
     }
   }
-  localStorage.setItem("ironhaus-demo-membership-history", JSON.stringify(rows));
+  prototypeStorage().setItem("ironhaus-demo-membership-history", JSON.stringify(rows));
 }
 
 export const PLAN_PRICES: Record<string, number> = { Basic: 800, Premium: 2100, VIP: 7200 };
@@ -518,7 +522,7 @@ const listeners = new Set<() => void>();
 
 function load(): DemoState {
   try {
-    const raw = localStorage.getItem(DATA_KEY);
+    const raw = prototypeStorage().getItem(DATA_KEY);
     if (raw) return { ...structuredClone(seed), ...JSON.parse(raw) } as DemoState;
   } catch {
     /* corrupted or unavailable storage -> reseed */
@@ -527,11 +531,15 @@ function load(): DemoState {
 }
 
 let demoState: DemoState = load();
+export function resetPrototypeData() {
+  demoState = structuredClone(seed);
+  listeners.forEach(l => l());
+}
 
 function commit(next: DemoState) {
   demoState = next;
   try {
-    localStorage.setItem(DATA_KEY, JSON.stringify(next));
+    prototypeStorage().setItem(DATA_KEY, JSON.stringify(next));
   } catch {
     /* storage full/unavailable: keep in-memory */
   }
@@ -776,8 +784,8 @@ export function readDemoGym(gymId: string, withSeed = false): State {
   let stored: State | undefined;
   try {
     const raw =
-      localStorage.getItem(`ironhaus-demo-gym:${gymId}`) ??
-      (gymId === "demo-gym" ? localStorage.getItem("ironhaus-demo-gym-state") : null);
+      prototypeStorage().getItem(`ironhaus-demo-gym:${gymId}`) ??
+      (gymId === "demo-gym" ? prototypeStorage().getItem("ironhaus-demo-gym-state") : null);
     if (raw) stored = JSON.parse(raw) as State;
   } catch {
     /* Use an empty gym or the owner seed. */
@@ -839,9 +847,9 @@ export function writeDemoGym(gymId: string, state: State) {
     rememberDemoMemberships(gymId, previous.gym.name, previous.members);
     rememberDemoMemberships(gymId, state.gym.name, state.members);
   }
-  localStorage.setItem(`ironhaus-demo-gym:${gymId}`, JSON.stringify(state));
+  prototypeStorage().setItem(`ironhaus-demo-gym:${gymId}`, JSON.stringify(state));
   Object.assign(submitted, state);
-  if (gymId === "demo-gym") localStorage.setItem("ironhaus-demo-gym-state", JSON.stringify(state));
+  if (gymId === "demo-gym") prototypeStorage().setItem("ironhaus-demo-gym-state", JSON.stringify(state));
   appendGymEvents(gymId, gymEvents(previous, state));
 }
 export function changeDemoStaff(

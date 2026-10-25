@@ -13,6 +13,7 @@ import { PlatformSettings } from '@/components/PlatformSettings';
 import { ExerciseImage } from '@/components/ProgramEditor';
 import { useDemoStore, getDemoSession } from '@/lib/demo';
 import { AppBrand } from '@/components/AppBrand';
+import { readPreviewSession } from '@/lib/preview-session';
 
 export const Route = createFileRoute('/super-admin')({
   head: () => seo('Platform administration', 'IronHaus platform super admin: gym requests, approved gyms, clients and platform metrics.'),
@@ -49,7 +50,7 @@ function SuperAdminContent() {
           <div className="min-w-0">
             {branding?.name && branding.name !== 'IRONHAUS Platform' && branding.name !== 'GYVORA' && <div className="break-words font-display text-sm font-semibold">{branding.name}</div>}
             {branding?.logo && <ExerciseImage path={branding.logo} className="h-10 w-10 object-contain" />}
-            <div className="text-xs text-muted-foreground">{getDemoSession()?'Super Admin · local demo':'Super Admin · saved accounts'}</div>
+            <div className="text-xs text-muted-foreground">{readPreviewSession() ? 'Administrator design · prototype' : getDemoSession()?'Super Admin · local demo':'Super Admin · saved accounts'}</div>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">

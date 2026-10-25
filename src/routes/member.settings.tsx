@@ -11,6 +11,7 @@ import { Field } from "@/components/kit";
 import { z } from "zod";
 import { toast } from "sonner";
 import { seo } from "@/lib/seo";
+import { readPreviewSession } from '@/lib/preview-session';
 export const Route = createFileRoute("/member/settings")({
   head: () =>
     seo(
@@ -31,6 +32,7 @@ function Settings() {
         className="max-w-lg space-y-5"
         onSubmit={async (e) => {
           e.preventDefault();
+          if (readPreviewSession()) {toast.info('Prototype only — account details were not changed.');return;}
           setBusy(true);
           const d = new FormData(e.currentTarget);
           try {
@@ -68,6 +70,7 @@ function Settings() {
             onChange={async (e) => {
               const f = e.target.files?.[0];
               if (!f) return;
+              if (readPreviewSession()) {toast.info('Prototype only — no photo uploaded.');return;}
               try {
                 setPhoto(await uploadImage(f));
               } catch (e) {
@@ -99,6 +102,7 @@ function Settings() {
           className="mt-4 space-y-4"
           onSubmit={async (e) => {
             e.preventDefault();
+            if (readPreviewSession()) {e.currentTarget.reset();toast.info('Prototype only — no password was changed.');return;}
             const d = new FormData(e.currentTarget);
             const p = z
               .object({ current: z.string().min(1).max(128), next: z.string().min(8).max(128) })

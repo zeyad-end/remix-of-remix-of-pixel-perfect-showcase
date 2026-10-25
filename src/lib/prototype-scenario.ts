@@ -3,7 +3,7 @@ import { getDemoState } from './demo';
 
 export const SAMPLE_GYM_ID = 'GYVORA-G-123';
 export const SAMPLE_CLIENT_ID = 'GYVORA-C-456';
-export type SampleRequest = {id: string; gymName: string; plan: 'Monthly Plan' | 'Annual Plan'; requestDate: string; status: 'Pending' | 'Approved' | 'Rejected'; decisionNote?: string; skipped: boolean; trialStartedAt?: number; trialExpiresAt?: number};
+export type SampleRequest = {id: string; gymName: string; plan: string; requestDate: string; status: 'Pending' | 'Approved' | 'Rejected'; decisionNote?: string; skipped: boolean; trialStartedAt?: number; trialExpiresAt?: number};
 const key = 'gyvora-fictional-subscription-scenario';
 const scopedKey = 'gyvora-fictional-subscription-contacts';
 export const PROTOTYPE_TRIAL_MS = 60 * 60 * 1000;
@@ -23,7 +23,8 @@ export function readSampleRequest(scope = currentScope()): SampleRequest | null 
     const row = scope ? readRegistry()[scope] : JSON.parse(localStorage.getItem(key) ?? 'null');
     if (!row || row.id !== 'prototype-subscription-request' || typeof row.gymName !== 'string' || !['Monthly Plan','Annual Plan'].includes(row.plan) || !['Pending','Approved','Rejected'].includes(row.status)) return null;
     const decision = getDemoState().requests.find(r => r.id === (scope ? `prototype-${scope}` : row.id));
-    return decision ? {...row, status: decision.status, decisionNote: decision.decisionNote} : row as SampleRequest;
+    const gym = scope ? getDemoState().gyms.find(g => g.email === scope) : undefined;
+    return decision ? {...row, gymName:gym?.name ?? decision.gymName, plan:gym?.plan ?? decision.plan, status: decision.status, decisionNote: decision.decisionNote} : row as SampleRequest;
   } catch {return null;}
 }
 export function saveSampleRequest(request: SampleRequest, scope = currentScope()) {

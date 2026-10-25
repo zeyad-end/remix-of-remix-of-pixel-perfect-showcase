@@ -232,6 +232,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       const base: State = savedWorkspace ? JSON.parse(savedWorkspace) : structuredClone(initialState);
       const sampleRequest = readSampleRequest();
       if (sampleRequest) base.gym.name = sampleRequest.gymName;
+      const approvedGym = type === 'gym' ? getDemoState().gyms.find(g => g.email === prototype.scenarioKey) : undefined;
+      if (approvedGym) base.gym.name = approvedGym.name;
       if (type === 'individual') {
         base.members = base.members.slice(0, 1).map(m => ({...m, clientId: id}));
         prototypeStorage().setItem('ironhaus-demo-gym:demo-gym', JSON.stringify(base));
@@ -242,6 +244,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       setGyms(type === 'dashboard' ? [] : [{id:workspaceId,name:base.gym.name,owner_id:id,created_at:'',frozen_at:null,freeze_note:'',deleted_at:null,deletion_note:'',deletion_history:[],gyvora_id:SAMPLE_GYM_ID}]);
       setGymId(type === 'gym' ? workspaceId : '');
       if (type === 'gym') bindPersistence(async changes => {
+        resetPrototypeData();
+        const currentGym = getDemoState().gyms.find(g => g.email === prototype.scenarioKey);
+        if (currentGym?.deletedAt || currentGym?.status === 'Frozen' || readSampleRequest()?.status === 'Rejected') throw new Error('This prototype gym is suspended.');
         const next = {...getState(), ...changes};
         prototypeStorage().setItem(`ironhaus-demo-gym:${workspaceId}`, JSON.stringify(next));
         hydrateState(next);
@@ -295,6 +300,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }
   useEffect(() => {
     void refresh();
+    const syncPrototype = (event: StorageEvent) => {
+      if (readPreviewSession() && event.key?.startsWith('gyvora-isolated-prototype:')) void refresh();
+    };
+    window.addEventListener('storage', syncPrototype);
 
     const {
       data: { subscription },
@@ -306,6 +315,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       });
     });
     return () => {
+      window.removeEventListener('storage', syncPrototype);
       subscription.unsubscribe();
       bindPersistence(undefined);
     };

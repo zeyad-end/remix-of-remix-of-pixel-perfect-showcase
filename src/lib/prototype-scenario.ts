@@ -1,5 +1,6 @@
 import { readPreviewSession } from './preview-session';
 import { getDemoState } from './demo';
+import { prototypePreviewEnabled } from './preview-environment';
 
 export const SAMPLE_GYM_ID = 'GYVORA-G-123';
 export const SAMPLE_CLIENT_ID = 'GYVORA-C-456';
@@ -18,7 +19,7 @@ export function makeSampleRequest(gymName: string, plan: string, skipped: boolea
   return {id:'prototype-subscription-request',gymName:gymName.trim().slice(0,100),plan,requestDate:date,status:'Pending',skipped};
 }
 export function readSampleRequest(scope = currentScope()): SampleRequest | null {
-  if (!import.meta.env.DEV || typeof window === 'undefined') return null;
+  if (!prototypePreviewEnabled() || typeof window === 'undefined') return null;
   try {
     const row = scope ? readRegistry()[scope] : JSON.parse(localStorage.getItem(key) ?? 'null');
     if (!row || row.id !== 'prototype-subscription-request' || typeof row.gymName !== 'string' || !['Monthly Plan','Annual Plan'].includes(row.plan) || !['Pending','Approved','Rejected'].includes(row.status)) return null;
@@ -28,7 +29,7 @@ export function readSampleRequest(scope = currentScope()): SampleRequest | null 
   } catch {return null;}
 }
 export function saveSampleRequest(request: SampleRequest, scope = currentScope()) {
-  if (!import.meta.env.DEV) throw new Error('Prototype scenario unavailable.');
+  if (!prototypePreviewEnabled()) throw new Error('Prototype scenario unavailable.');
   if (scope) localStorage.setItem(scopedKey, JSON.stringify({...readRegistry(), [scope]:request}));
   localStorage.setItem(key,JSON.stringify(request));
 }

@@ -16,6 +16,7 @@ import { AppBrand } from '@/components/AppBrand';
 import { SocialSignIn } from "@/components/SocialSignIn";
 import { supabase } from '@/integrations/supabase/client';
 import { resolveDestination } from '@/lib/post-login';
+import { prototypePreviewEnabled } from '@/lib/preview-environment';
 
 export const Route = createFileRoute("/")({
   head: () => ({meta: [...seo("Login prototype", "Review GYVORA Gym, Client and Administrator designs with simulated login and no real account access.").meta, {property:"og:image",content:cover.url},{name:"twitter:image",content:cover.url}]}),
@@ -53,7 +54,7 @@ function Login() {
     setBusy(true);setError('');
     try {
       // Preview credentials never enter the real authentication flow.
-      if (import.meta.env.DEV) {
+      if (prototypePreviewEnabled()) {
         const contact = destination === 'gym' ? phone.trim() || email.trim() : email.trim();
         const session = await createStablePreviewSession(destination,name,contact,password,true);
         await router.options.context.queryClient.cancelQueries();
@@ -104,7 +105,7 @@ function Login() {
           <AppBrand large className="mb-8" />
           <h1 className="text-3xl font-semibold">Welcome back</h1>
           <p className="mt-1 text-sm text-muted-foreground">Sign in to your account</p>
-          <p role="status" className="mt-3 text-sm text-muted-foreground">{import.meta.env.DEV ? 'Prototype only — fictional credentials open saved prototype accounts, not real accounts.' : 'Sign in with your account email and password.'}</p>
+          <p role="status" className="mt-3 text-sm text-muted-foreground">{hydrated && prototypePreviewEnabled() ? 'Prototype only — fictional credentials open saved prototype accounts, not real accounts.' : 'Sign in with your account email and password.'}</p>
           {created && <p className="mt-3 text-sm text-success">Account created — sign in with your email and password.</p>}
 
           <div className="mt-8"><AccountTypeSelector value={destination} onChange={setDestination} dashboard/></div>

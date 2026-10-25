@@ -20,7 +20,7 @@ import { SocialSignIn } from "@/components/SocialSignIn";
 
 export const Route = createFileRoute("/")({
   head: () => ({meta: [...seo("Login", "Sign in to your GYVORA gym or client account with your email or phone and password.").meta, {property:"og:image",content:cover.url},{name:"twitter:image",content:cover.url}]}),
-  validateSearch: (search: Record<string, unknown>) => ({created: search["created"] === true || search["created"] === "true"}),
+  validateSearch: (search: Record<string, unknown>): { created?: boolean } => ({created: search["created"] === true || search["created"] === "true"}),
   component: Login,
 });
 

@@ -15,7 +15,7 @@ import { AppBrand } from '@/components/AppBrand';
 import { SocialSignIn } from "@/components/SocialSignIn";
 
 export const Route = createFileRoute("/")({
-  head: () => ({meta: [...seo("Login", "Sign in to your GYVORA gym or client account with your email or phone and password.").meta, {property:"og:image",content:cover.url},{name:"twitter:image",content:cover.url}]}),
+  head: () => ({meta: [...seo("Login prototype", "Review GYVORA Gym, Client and Administrator designs with simulated login and no real account access.").meta, {property:"og:image",content:cover.url},{name:"twitter:image",content:cover.url}]}),
   validateSearch: (search: Record<string, unknown>): { created?: boolean } => ({created: search["created"] === true || search["created"] === "true"}),
   component: Login,
 });

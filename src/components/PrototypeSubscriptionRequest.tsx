@@ -88,14 +88,14 @@ export function PrototypeSubscriptionRequest() {
             <h1 className="text-xl font-semibold tracking-normal">Subscription approval pending</h1><p role="status" className="mt-1 text-sm text-muted-foreground">Your subscription request has been saved.</p>
             <div className="mt-6 rounded-xl border bg-surface p-4"><h2 className="text-sm font-semibold tracking-normal">Request status</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">An administrator will review your gym request. Dashboard access remains unavailable until approval unless the temporary prototype access from Skip is active.</p><span className="mt-2 inline-block rounded-full bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary">Pending · Awaiting approval</span><p className="mt-3 break-words text-xs text-muted-foreground">{request?.gymName} · {plans.find(p => p.value === request?.plan)?.label} · {request?.requestDate}</p></div>
             {expiredTrial && <p role="status" className="mt-4 text-sm text-muted-foreground">Your trial period has ended. Your request is awaiting administrator approval.</p>}
-            <div className="mt-5 flex flex-wrap justify-end gap-2"><Button variant="secondary" onClick={() => void c.logout()}>Log out</Button>{!expiredTrial && <Button disabled={busy} onClick={() => void skip()}>{activeTrial ? 'Continue to Dashboard' : 'Skip — Enter Dashboard'}</Button>}</div>
+            <div className="mt-5 flex flex-wrap justify-end gap-2"><Button variant="secondary" onClick={() => void c.logout()}>Back to login</Button>{!expiredTrial && <Button disabled={busy} onClick={() => void skip()}>{activeTrial ? 'Continue to Dashboard' : 'Skip — Enter Dashboard'}</Button>}</div>
             {activeTrial && <p role="status" className="mt-3 text-sm text-muted-foreground">Prototype trial · {Math.ceil(((request?.trialExpiresAt ?? now) - now) / 60000)} minutes remaining. The saved expiry does not restart on login.</p>}
           </div>}
           {step !== 0 && error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}
         </div>
         <footer className="flex items-center justify-between gap-3 border-t px-5 py-3 text-[11px] text-muted-foreground"><span>GYVORA · Gym subscription request</span><span className="shrink-0">Screen {step + 1} / 3</span></footer>
       </section>
-      <nav aria-label="Wizard navigation" className="mt-3 flex items-center justify-between gap-2"><Button variant="secondary" size="sm" disabled={step !== 1 || busy} onClick={() => setStep(0)}>Previous</Button><span className="text-center text-xs font-semibold">{steps[step]}</span><Button variant="secondary" size="sm" disabled={step === 2 || busy || (step === 0 && (!plan || !name.trim()))} onClick={() => step === 0 ? void send() : setStep(2)}>Next</Button></nav>
+
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground"><p>Prototype only — fictional data. No real account, request or payment.</p>{request && <Button variant="ghost" size="sm" onClick={reset}><RotateCcw />Reset flow</Button>}</div>
     </div>
   </main>;

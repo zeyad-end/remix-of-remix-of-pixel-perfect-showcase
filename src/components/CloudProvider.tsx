@@ -244,12 +244,6 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-    if (import.meta.env.DEV) {
-      generation.current++;
-      bindPersistence(undefined);
-      setProfile(null); setGyms([]); setGymId(''); setRole(''); setPermissions([]); setVerified(false); setIsAdmin(false); setLoading(false);
-      return;
-    }
     const info = getDemoSessionInfo();
     const demo = info?.kind ?? null;
     if (demo && info) {
@@ -377,7 +371,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }
   useEffect(() => {
     void refresh();
-    if (import.meta.env.DEV) return () => bindPersistence(undefined);
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {

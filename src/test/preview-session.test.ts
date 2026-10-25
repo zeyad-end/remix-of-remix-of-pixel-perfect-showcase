@@ -7,6 +7,11 @@ describe('isolated preview account rules', () => {
     expect(() => createPreviewSession('gym','Fictional','anything','anything',false)).toThrow();
     expect(() => createPreviewSession('gym',' ','anything','anything',true)).toThrow();
   });
+  for (const contact of ['owner@example.test', '+201000000123']) it(`accepts Gym login using ${contact} with the existing password field`, () => {
+    expect(createPreviewSession('gym', 'Fictional owner', contact, 'existing-password', true).type).toBe('gym');
+    expect(() => createPreviewSession('gym', 'Fictional owner', contact, '', true)).toThrow();
+    expect(() => createPreviewSession('gym', 'Fictional owner', contact, 'existing-password', false)).toThrow();
+  });
    it('allows only the administrator design, with no persisted identity or real role', () => {
      expect(createPreviewSession('dashboard','Fictional','anything','anything',true).type).toBe('dashboard');
      expect(() => createPreviewSession('admin','Fictional','anything','anything',true)).toThrow();

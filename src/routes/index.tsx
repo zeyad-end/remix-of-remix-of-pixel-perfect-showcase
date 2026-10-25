@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useHydrated, useRouter } from "@tanstack/react-router";
 import { useCloud } from "@/components/CloudProvider";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,8 @@ function Login() {
   const [error,setError]=useState('');
   const navigate = useNavigate();
   const cloud = useCloud();
+  const hydrated = useHydrated();
+  const router = useRouter();
   const { created } = Route.useSearch();
 
   async function signIn(e: React.FormEvent<HTMLFormElement>) {
@@ -48,6 +50,8 @@ function Login() {
     try {
       if (import.meta.env.DEV) {
         const session = createPreviewSession(destination,name,email,password,true);
+        await router.options.context.queryClient.cancelQueries();
+        router.options.context.queryClient.clear();
         clearPrototypeStorage(); resetPrototypeData();
         savePreviewSession(session);
         await cloud.refresh();
@@ -94,7 +98,7 @@ function Login() {
             <Link to="/forgot-password" className="block text-xs text-primary hover:underline">Forgot password?</Link>
             <div className="flex items-center gap-2"><Checkbox id="demo-remember" checked={remember} onCheckedChange={value => setRemember(value === true)} /><Label htmlFor="demo-remember" className="text-sm font-normal">Remember Me</Label></div>
             {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={busy} className="h-11 w-full">{busy?'Signing in…':'Login'}</Button>
+            <Button type="submit" disabled={busy || !hydrated} className="h-11 w-full">{busy?'Opening prototype…':'Login'}</Button>
           </form>
           <SocialSignIn prototype />
           <p className="mt-6 text-center text-sm text-muted-foreground">

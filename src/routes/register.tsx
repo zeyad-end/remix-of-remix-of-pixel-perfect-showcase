@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, useHydrated } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ export const Route = createFileRoute('/register')({
   component: Register,
 });
 function Register() {
+  const hydrated = useHydrated();
   const [error, setError] = useState('');
   const [accountType, setAccountType] = useState<'gym' | 'individual'>('gym');
   const [email, setEmail] = useState('');
@@ -46,7 +47,7 @@ function Register() {
       <Field label="Password" className="sm:col-span-2"><Input name="password" type="password" required minLength={8} maxLength={128} autoComplete="off"/></Field>
       {accountType === 'individual' && <><Field label="Date of birth"><Input name="dob" type="date"/></Field><Field label="Gender"><select name="gender" className="h-10 w-full rounded-md border bg-card px-3"><option value="">Not specified</option><option>Male</option><option>Female</option></select></Field></>}
       {error && <p role="alert" className="text-sm text-destructive sm:col-span-2">{error}</p>}
-      <Button type="submit" className="sm:col-span-2">Create Account</Button>
+      <Button type="submit" disabled={!hydrated} className="sm:col-span-2">Create Account</Button>
       <p className="text-sm text-muted-foreground sm:col-span-2">Already have an account? <Link to="/" className="text-primary">Sign in</Link></p>
     </form>}
   </div></div>;

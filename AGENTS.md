@@ -12,7 +12,7 @@
 ## Application architecture
 - GYVORA IDs use a shared locked text allocator and append-only versioned registry; old reservations stay retired, demo caches migrate once, and opaque demo reservations return only IDs. Browser-local contacts and legacy account keys stay isolated.
 - Development signup uses local mock codes without provider accounts; production server send/verify boundaries fail closed until real providers are installed.
-- Prototype layouts use in-memory fixtures, labeled sample QR and a resettable tab-local subscription scenario across role switches; blocked server calls prevent real access.
+- Prototype layouts use isolated fixtures and sample QR; the subscription wizard shares a resettable tab-local Pending scenario with admin review. Real request logic stays separate and server calls are blocked.
 - User gym browsing uses the existing safe content RPC and a dashboard-styled client workspace; public projections never include management data or grant membership. Personal workout saves keep source gym/plan keys with a per-user unique index, while editable definitions remain independent.
 - Persisted staff page names grant read access and page:create/edit/delete grant independent actions in existing invitation/role permission arrays; database record triggers enforce actions, and member gym discovery includes owner-added memberships without manual directory links.
 - Admin gym deletion uses retained tombstones, an append-only deletion/restore history and the shared database entitlement predicate; reversible suspension never disables owner authentication or removes associations, while the separate permanent-account flow remains isolated.

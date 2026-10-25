@@ -15,6 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Field } from '@/components/kit';
 import { seo } from '@/lib/seo';
 import logo from '@/assets/gyvora-logo.png.asset.json';
+import { readPreviewSession } from '@/lib/preview-session';
+import { PrototypeSubscriptionRequest } from '@/components/PrototypeSubscriptionRequest';
 
 export const Route = createFileRoute('/subscription-request')({
   head: () => seo('Gym subscription request', 'Choose a Monthly or Annual GYVORA subscription and request administrator approval.'),
@@ -28,6 +30,9 @@ type SavedRequest = Database['public']['Tables']['owner_requests']['Row'];
 type Step = SubscriptionStep;
 
 function Request() {
+  return readPreviewSession()?.type === 'gym' ? <PrototypeSubscriptionRequest/> : <SavedSubscriptionRequest/>;
+}
+function SavedSubscriptionRequest() {
   const c = useCloud();
   const navigate = useNavigate();
   const submit = useServerFn(requestSubscription);

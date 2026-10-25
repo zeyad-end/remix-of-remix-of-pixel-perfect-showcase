@@ -15,6 +15,13 @@
       "when": 1792957611388,
       "tag": "0001_request_decision_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792958984988,
+      "tag": "0002_restore_profile_creation_trigger",
+      "breakpoints": true
     }
   ]
 }

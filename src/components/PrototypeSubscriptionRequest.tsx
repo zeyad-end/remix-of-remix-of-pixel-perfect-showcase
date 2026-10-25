@@ -7,6 +7,7 @@ import { Input } from './ui/input';
 import { Field } from './kit';
 import { makeSampleRequest, readSampleRequest, resetSampleRequest, saveSampleRequest, type SampleRequest } from '@/lib/prototype-scenario';
 import { localDate } from '@/lib/gym-period';
+import logo from '@/assets/gyvora-logo.png.asset.json';
 
 const plans = [
   { value: 'Monthly Plan', label: 'Monthly Subscription', detail: 'Subscription renewed every month' },
@@ -19,7 +20,7 @@ export function PrototypeSubscriptionRequest() {
   const navigate = useNavigate();
   const [request, setRequest] = useState<SampleRequest | null>(readSampleRequest);
   const [step, setStep] = useState(() => readSampleRequest() ? 2 : 0);
-  const [name, setName] = useState(request?.gymName ?? 'Sample Gym');
+  const [name, setName] = useState(request?.gymName ?? 'GYVORA');
   const [plan, setPlan] = useState(request?.plan ?? '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -44,7 +45,7 @@ export function PrototypeSubscriptionRequest() {
     finally { setBusy(false); }
   }
   function reset() {
-    resetSampleRequest(); setRequest(null); setName('Sample Gym'); setPlan(''); setStep(0); setError(''); void c.refresh();
+    resetSampleRequest(); setRequest(null); setName('GYVORA'); setPlan(''); setStep(0); setError(''); void c.refresh();
   }
 
   return <main className="subscription-wizard min-h-screen bg-background px-4 py-6 sm:px-8">
@@ -55,8 +56,8 @@ export function PrototypeSubscriptionRequest() {
       </nav>
       <section className="overflow-hidden rounded-2xl border bg-card" aria-label="Gym subscription request">
         <header className="flex items-center justify-between gap-3 border-b px-5 py-3">
-          <div className="flex min-w-0 items-center gap-2"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">GY</span><p className="min-w-0 break-words text-sm"><strong>{(step === 0 ? name : request?.gymName) || 'Sample Gym'}</strong><span className="text-muted-foreground"> · Gym Account</span></p></div>
-          <span className="shrink-0 rounded-full border px-2.5 py-1 text-[11px] text-muted-foreground">Prototype</span>
+          <div className="flex min-w-0 items-center gap-2"><img src={logo.url} alt="GYVORA logo" width={28} height={28} className="h-7 w-7 shrink-0 rounded-lg object-contain" /><p className="min-w-0 break-words text-sm"><strong>GYVORA</strong><span className="text-muted-foreground"> · Gym Account</span></p></div>
+          <span className="shrink-0 rounded-full border px-2.5 py-1 text-[11px] text-muted-foreground">Demo access</span>
         </header>
         <div className="mx-auto max-w-[616px] px-5 py-7 sm:px-0">
           {step === 0 ? <form onSubmit={e => { e.preventDefault(); void send(); }} noValidate>
@@ -76,12 +77,13 @@ export function PrototypeSubscriptionRequest() {
           </form> : step === 1 ? <div className="mx-auto my-2 max-w-[510px] rounded-2xl border bg-surface px-5 py-6 text-center sm:px-10">
             <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success"><Check className="h-7 w-7" /></span>
             <h1 className="text-xl font-semibold tracking-normal">Request sent</h1>
-            <p role="status" className="mt-2 text-sm leading-relaxed text-muted-foreground">Your fictional request has been sent to the prototype preview and is waiting for administrator approval.</p>
+            <p role="status" className="mt-2 text-sm leading-relaxed text-muted-foreground">Your request has been sent and is waiting for administrator approval.</p>
+            <p className="mt-3 break-words text-xs text-muted-foreground">{request?.gymName} · {plans.find(p => p.value === request?.plan)?.label}</p>
             <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row"><Button variant="secondary" disabled={busy} className="h-10" onClick={() => setStep(2)}>Done</Button><Button disabled={busy} className="h-auto min-h-10 whitespace-normal py-2" onClick={() => void skip()}>Skip — Enter Demo Dashboard</Button></div>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Skip grants prototype demo access only. It does not approve or mark the subscription as paid. The request remains Pending.</p>
           </div> : <div>
-            <h1 className="text-xl font-semibold tracking-normal">Subscription approval pending</h1><p role="status" className="mt-1 text-sm text-muted-foreground">Your fictional subscription request has been saved.</p>
-            <div className="mt-6 rounded-xl border bg-surface p-4"><h2 className="text-sm font-semibold tracking-normal">Request status</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">An administrator would review your gym request. Dashboard access remains unavailable until approval unless you choose Skip for prototype demo access.</p><span className="mt-2 inline-block rounded-full bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary">Pending · Awaiting approval</span><p className="mt-3 break-words text-xs text-muted-foreground">{request?.gymName} · {plans.find(p => p.value === request?.plan)?.label} · {request?.requestDate}</p></div>
+            <h1 className="text-xl font-semibold tracking-normal">Subscription approval pending</h1><p role="status" className="mt-1 text-sm text-muted-foreground">Your subscription request has been saved.</p>
+            <div className="mt-6 rounded-xl border bg-surface p-4"><h2 className="text-sm font-semibold tracking-normal">Request status</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">An administrator will review your gym request. Dashboard access remains unavailable until approval unless you choose Skip for prototype demo access.</p><span className="mt-2 inline-block rounded-full bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary">Pending · Awaiting approval</span><p className="mt-3 break-words text-xs text-muted-foreground">{request?.gymName} · {plans.find(p => p.value === request?.plan)?.label} · {request?.requestDate}</p></div>
             <div className="mt-5 flex justify-end"><Button variant="secondary" className="h-auto min-h-10 whitespace-normal py-2" onClick={() => { setStep(0); setError(''); }}>Back to subscription options</Button></div>
           </div>}
           {step !== 0 && error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}

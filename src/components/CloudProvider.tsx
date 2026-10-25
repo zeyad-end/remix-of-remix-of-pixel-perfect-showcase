@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useRef, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useRouter, useRouterState, Link } from "@tanstack/react-router";
+import { useRouter, useRouterState, useHydrated, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { bindPersistence, hydrateState, getState, type State } from "@/lib/store";
@@ -20,6 +20,8 @@ import { MessageCircle } from 'lucide-react';
 import { DemoOwnerGate } from './DemoOwnerGate';
 import { reserveDemoIdentities } from '@/lib/demo-identities.functions';
 import { syncDemoIdentities, demoIdentity } from '@/lib/demo-identities';
+import { readPreviewSession, savePreviewSession } from '@/lib/preview-session';
+import { PreviewWorkspace } from './PreviewWorkspace';
 import {
   getDemoSession,
   getDemoSessionInfo,
@@ -215,6 +217,13 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }
   async function refresh() {
     setLoading(true);
+    if (readPreviewSession()) {
+      generation.current++;
+      bindPersistence(undefined);
+      setProfile(null); setGyms([]); setGymId(''); setRole(''); setPermissions([]); setVerified(false); setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
     const info = getDemoSessionInfo();
     const demo = info?.kind ?? null;
     if (demo && info) {
@@ -363,6 +372,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   async function logout() {
     await router.options.context?.queryClient.cancelQueries();
     router.options.context?.queryClient.clear();
+    savePreviewSession(null);
     const demo = getDemoSession();
     setDemoSession(null);
     bindPersistence(undefined);
@@ -402,12 +412,17 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 }
 export function AccessBoundary({ children }: { children: ReactNode }) {
   const c = useCloud();
+  const hydrated = useHydrated();
   const path = useRouterState({ select: (s) => s.location.pathname });
   useDemoStore((s) => s.requests); // re-check gym access when request decisions load or change
   useDemoStore((s) => s.gyms);
   useDemoStore((s) => s.clientFreeze);
   const publicPaths = ["/", "/register", "/auth", "/reset-password", "/forgot-password", "/client-sign-in", "/demo-signup", "/demo-recovery"];
   if (publicPaths.includes(path)) return children;
+  if (!hydrated) return <div className="p-12 text-muted-foreground">Loading your account…</div>;
+  const preview = readPreviewSession();
+  // Do not mount real account pages, their queries, or legacy demo stores.
+  if (preview) return <PreviewWorkspace session={preview} logout={c.logout}/>;
   if (c.loading) return <div className="p-12 text-muted-foreground">Loading your account…</div>;
   const demo = getDemoSession();
   if (demo === "super") {

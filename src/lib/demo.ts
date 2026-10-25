@@ -540,7 +540,7 @@ export function resetPrototypeData() {
     const rows = Object.entries(samples).map(([scope, sample]) => {
       const id = `prototype-${scope}`;
       const saved = demoState.requests.find(r => r.id === id);
-      return {...sample, id, ownerName:'Prototype reviewer', email:scope, phone:'', submittedAt:sample.requestDate, ...(saved ? {status:saved.status, decisionNote:saved.decisionNote, decidedAt:saved.decidedAt} : {})};
+      return {...sample, id, ownerName:'Prototype reviewer', email:scope, phone:'', submittedAt:sample.requestDate, ...(saved ? {gymName:saved.gymName, plan:saved.plan, status:saved.status, decisionNote:saved.decisionNote, decidedAt:saved.decidedAt} : {})};
     });
     demoState.requests = [...rows, ...demoState.requests.filter(r => !r.id.startsWith('prototype-'))];
     prototypeStorage().setItem(DATA_KEY, JSON.stringify(demoState));
@@ -930,7 +930,7 @@ export function approveRequest(id: string) {
   const req = demoState.requests.find((r) => r.id === id);
   if (!req || !['Pending','Rejected'].includes(req.status)) return;
   if(getDemoAccounts().find(a=>a.email===req.email)?.deletedAt) throw new Error('Deleted gym accounts cannot be approved');
-  const existingGym=demoState.gyms.find(g=>g.email===req.email && g.name===req.gymName);
+  const existingGym=demoState.gyms.find(g=>g.email===req.email);
   const start = today();
   const offeredPlan=(demoState.platformPlans??defaultPlatformPlans).find(p=>p.name===req.plan);
   const gym: ApprovedGym = {
@@ -976,6 +976,7 @@ export function editGym(id: string, patch: { name: string; plan: string; start?:
   const legacyReset=patch.applyPlan&&!selected?{planId:undefined,billingType:undefined,durationDays:undefined}:{};
   commit({
     ...demoState,
+    requests: demoState.requests.map(r => r.email === current.email && r.status === 'Approved' ? {...r, gymName:name, plan:patch.plan} : r),
     gyms: demoState.gyms.map((g) =>
       g.id === id
         ? {
@@ -993,6 +994,7 @@ export function editGym(id: string, patch: { name: string; plan: string; start?:
 }
 
 export function setGymStatus(id: string, status: "Active" | "Frozen", note = '') {
+  if(readPreviewSession() && getDemoSession() !== 'super') throw new Error('Administrator prototype access required');
   commit({ ...demoState, gyms: demoState.gyms.map((g) => (g.id === id ? { ...g, status, freezeNote:status==='Frozen'?note.trim().slice(0,1000):'' } : g)) });
 }
 

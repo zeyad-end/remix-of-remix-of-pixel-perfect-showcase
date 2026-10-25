@@ -37,22 +37,13 @@ function DemoGyms() {
   return (
     <div>
       <PageHeader title="Approved Gyms" subtitle={`Total approved gyms: ${gyms.length} · fictional demo data.`} />
-      <DataTable head={['#', 'Gym Name', 'Phone', 'Email', 'Plan', 'Monthly price', 'Annual price', 'Start', 'End', 'Status', 'Notes', 'Actions']}>
+      <DataTable head={['#', 'Gym Name', 'Actions', 'Status', 'Phone', 'Email', 'Plan', 'Monthly price', 'Annual price', 'Start', 'End', 'Notes']}>
         {gyms.map((g, index) => (
           <tr key={g.id}>
             <td className={td}>{index + 1}</td>
             <td className={td}>{g.name}</td>
-            <td className={td}>{g.phone}</td>
-            <td className={td}>{g.email}</td>
-            <td className={td}>{g.plan}</td>
-            <td className={td}>{egp(gymPrices(g).monthlyPrice)}</td>
-            <td className={td}>{egp(gymPrices(g).annualPrice)}</td>
-            <td className={td}>{g.start}</td>
-            <td className={td}>{g.end}</td>
-            <td className={td}><span className={g.status==='Active'?'text-success':'text-muted-foreground'}>{g.status}</span></td>
-            <td className={td}>{g.notes?.trim()?<Button variant="ghost" size="icon" aria-label={`Notes for ${g.name}`} title={`Notes for ${g.name}`} onClick={()=>setNoteGymId(g.id)}><StickyNote className="h-4 w-4"/></Button>:'—'}</td>
-            <td className={td}>
-              <div className="flex flex-wrap gap-2">
+            <td className={`${td} min-w-[260px]`}>
+              <div className="flex flex-nowrap gap-2">
                 <Button size="icon" variant="ghost" aria-label={`Message ${g.name} owner`} title="Message gym owner" onClick={()=>{setMessaging(g);setMessageBody('');}}><MessageSquare className="h-4 w-4"/></Button>
                 <Button size="sm" variant="outline" onClick={() => setEditing(g)}>Edit</Button>
                 {g.status === 'Active' ? (
@@ -63,6 +54,15 @@ function DemoGyms() {
                 <Button size="sm" variant="destructive" onClick={() => {setDeleting(g);setDeletionNote('');}}>Delete</Button>
               </div>
             </td>
+            <td className={td}><span className={g.status==='Active'?'text-success':'text-muted-foreground'}>{g.status}</span></td>
+            <td className={td}>{g.phone}</td>
+            <td className={`${td} max-w-48 break-words`}>{g.email.startsWith('fictional-') ? 'Fictional owner' : g.email}</td>
+            <td className={td}>{g.plan}</td>
+            <td className={td}>{egp(gymPrices(g).monthlyPrice)}</td>
+            <td className={td}>{egp(gymPrices(g).annualPrice)}</td>
+            <td className={td}>{g.start}</td>
+            <td className={td}>{g.end}</td>
+            <td className={td}>{g.notes?.trim()?<Button variant="ghost" size="icon" aria-label={`Notes for ${g.name}`} title={`Notes for ${g.name}`} onClick={()=>setNoteGymId(g.id)}><StickyNote className="h-4 w-4"/></Button>:'—'}</td>
           </tr>
         ))}
       </DataTable>

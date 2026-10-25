@@ -8,6 +8,8 @@ import { Field } from './kit';
 import { makeSampleRequest, prototypeTrialActive, readSampleRequest, resetSampleRequest, sampleEntryStep, saveSampleRequest, startSampleTrial, type SampleRequest } from '@/lib/prototype-scenario';
 import { localDate } from '@/lib/gym-period';
 import logo from '@/assets/gyvora-logo.png.asset.json';
+import { getDemoState } from '@/lib/demo';
+import { readPreviewSession } from '@/lib/preview-session';
 
 const plans = [
   { value: 'Monthly Plan', label: 'Monthly Subscription', detail: 'Subscription renewed every month' },
@@ -28,6 +30,8 @@ export function PrototypeSubscriptionRequest() {
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer); }, []);
   const activeTrial = prototypeTrialActive(request, now);
   const expiredTrial = request?.trialExpiresAt !== undefined && !activeTrial;
+  const gym = getDemoState().gyms.find(g => g.email === readPreviewSession()?.scenarioKey);
+  const blocked = request?.status === 'Rejected' || gym?.status === 'Frozen' || !!gym?.deletedAt;
 
   async function send() {
     setBusy(true);
@@ -85,10 +89,10 @@ export function PrototypeSubscriptionRequest() {
             <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row"><Button variant="secondary" disabled={busy} className="h-10" onClick={() => setStep(2)}>Done</Button><Button disabled={busy} className="h-auto min-h-10 whitespace-normal py-2" onClick={() => void skip()}>Skip — Enter Dashboard</Button></div>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Skip starts a one-hour prototype trial once. It does not approve or mark the subscription as paid. The request remains Pending.</p>
           </div> : <div>
-            <h1 className="text-xl font-semibold tracking-normal">Subscription approval pending</h1><p role="status" className="mt-1 text-sm text-muted-foreground">Your subscription request has been saved.</p>
-            <div className="mt-6 rounded-xl border bg-surface p-4"><h2 className="text-sm font-semibold tracking-normal">Request status</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">An administrator will review your gym request. Dashboard access remains unavailable until approval unless the temporary prototype access from Skip is active.</p><span className="mt-2 inline-block rounded-full bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary">Pending · Awaiting approval</span><p className="mt-3 break-words text-xs text-muted-foreground">{request?.gymName} · {plans.find(p => p.value === request?.plan)?.label} · {request?.requestDate}</p></div>
+            <h1 className="text-xl font-semibold tracking-normal">{gym?.deletedAt ? 'Gym account suspended' : gym?.status === 'Frozen' ? 'Gym account frozen' : request?.status === 'Rejected' ? 'Request rejected' : request?.status === 'Approved' ? 'Subscription approved' : 'Subscription approval pending'}</h1><p role="status" className="mt-1 text-sm text-muted-foreground">Your subscription request has been saved.</p>
+            <div className="mt-6 rounded-xl border bg-surface p-4"><h2 className="text-sm font-semibold tracking-normal">Request status</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{blocked ? 'Gym dashboard access is unavailable. Contact the prototype administrator.' : request?.status === 'Approved' ? 'Your prototype request has been approved.' : 'An administrator will review your gym request. Dashboard access remains unavailable until approval unless the temporary prototype access from Skip is active.'}</p><span className="mt-2 inline-block rounded-full bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary">{request?.status ?? 'Pending'}{request?.status === 'Pending' ? ' · Awaiting approval' : ''}</span><p className="mt-3 break-words text-xs text-muted-foreground">{request?.gymName} · {plans.find(p => p.value === request?.plan)?.label} · {request?.requestDate}</p>{(gym?.deletionNote || gym?.freezeNote || request?.decisionNote) && <p role="status" className="mt-3 whitespace-pre-wrap break-words text-sm">Reason: {gym?.deletedAt ? gym.deletionNote : gym?.status === 'Frozen' ? gym.freezeNote : request?.decisionNote}</p>}</div>
             {expiredTrial && <p role="status" className="mt-4 text-sm text-muted-foreground">Your trial period has ended. Your request is awaiting administrator approval.</p>}
-            <div className="mt-5 flex flex-wrap justify-end gap-2"><Button variant="secondary" onClick={() => void c.logout()}>Back to login</Button>{!expiredTrial && <Button disabled={busy} onClick={() => void skip()}>{activeTrial ? 'Continue to Dashboard' : 'Skip — Enter Dashboard'}</Button>}</div>
+            <div className="mt-5 flex flex-wrap justify-end gap-2"><Button variant="secondary" onClick={() => void c.logout()}>Back to login</Button>{!blocked && (request?.status === 'Approved' ? <Button onClick={() => void navigate({to:'/dashboard'})}>Continue to Dashboard</Button> : !expiredTrial && <Button disabled={busy} onClick={() => void skip()}>{activeTrial ? 'Continue to Dashboard' : 'Skip — Enter Dashboard'}</Button>)}</div>
             {activeTrial && <p role="status" className="mt-3 text-sm text-muted-foreground">Prototype trial · {Math.ceil(((request?.trialExpiresAt ?? now) - now) / 60000)} minutes remaining. The saved expiry does not restart on login.</p>}
           </div>}
           {step !== 0 && error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}

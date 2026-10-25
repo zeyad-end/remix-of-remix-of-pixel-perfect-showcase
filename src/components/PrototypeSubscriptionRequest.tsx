@@ -78,7 +78,7 @@ export function PrototypeSubscriptionRequest() {
             <h1 className="text-xl font-semibold tracking-normal">Request sent</h1>
             <p role="status" className="mt-2 text-sm leading-relaxed text-muted-foreground">Your request has been sent and is waiting for administrator approval.</p>
             <p className="mt-3 break-words text-xs text-muted-foreground">{request?.gymName} · {plans.find(p => p.value === request?.plan)?.label}</p>
-            <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row"><Button variant="secondary" disabled={busy} className="h-10" onClick={() => setStep(2)}>Done</Button><Button disabled={busy} className="h-auto min-h-10 whitespace-normal py-2" onClick={() => void skip()}>Skip — Enter Demo Dashboard</Button></div>
+            <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row"><Button variant="secondary" disabled={busy} className="h-10" onClick={() => setStep(2)}>Done</Button><Button disabled={busy} className="h-auto min-h-10 whitespace-normal py-2" onClick={() => void skip()}>Skip — Enter Dashboard</Button></div>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Skip grants temporary prototype access only. It does not approve or mark the subscription as paid. The request remains Pending.</p>
           </div> : <div>
             <h1 className="text-xl font-semibold tracking-normal">Subscription approval pending</h1><p role="status" className="mt-1 text-sm text-muted-foreground">Your subscription request has been saved.</p>

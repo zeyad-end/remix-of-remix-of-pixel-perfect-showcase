@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useRouter, useRouterState, useHydrated, Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { bindPersistence, hydrateState, getState, type State } from "@/lib/store";
+import { bindPersistence, hydrateState, getState, initialState, type State } from "@/lib/store";
 import { gym as gymSeed } from "@/lib/mock";
 import { saveRecords, getStaff, getReportingEvents } from "@/lib/cloud.functions";
 import { Button } from "./ui/button";
@@ -21,7 +21,7 @@ import { DemoOwnerGate } from './DemoOwnerGate';
 import { reserveDemoIdentities } from '@/lib/demo-identities.functions';
 import { syncDemoIdentities, demoIdentity } from '@/lib/demo-identities';
 import { readPreviewSession, savePreviewSession } from '@/lib/preview-session';
-import { PreviewWorkspace } from './PreviewWorkspace';
+import { clearPrototypeStorage, prototypeStorage } from '@/lib/prototype-storage';
 import {
   getDemoSession,
   getDemoSessionInfo,
@@ -37,6 +37,7 @@ import {
   readDemoGym,
   writeDemoGym,
   prepareDemoIdentities,
+  resetPrototypeData,
 } from "@/lib/demo";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -217,11 +218,31 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }
   async function refresh() {
     setLoading(true);
-    if (readPreviewSession()) {
+    const prototype = readPreviewSession();
+    if (prototype) {
       generation.current++;
       bindPersistence(undefined);
-      setProfile(null); setGyms([]); setGymId(''); setRole(''); setPermissions([]); setVerified(false); setIsAdmin(false);
+      const id = demoUserId('reviewer@example.test');
+      const type = prototype.type;
+      const base = structuredClone(initialState);
+      if (type === 'individual') {
+        base.members = base.members.slice(0, 1).map(m => ({...m, clientId: id}));
+        prototypeStorage().setItem('ironhaus-demo-gym:demo-gym', JSON.stringify(base));
+        prototypeStorage().setItem(`ironhaus-client-links:${id}`, JSON.stringify([{gymId:'demo-gym',favorite:false}]));
+      }
+      hydrateState(base);
+      setProfile({id,full_name: 'Prototype reviewer',email:'reviewer@example.test',phone:'',photo:'',account_type:type === 'gym' ? 'owner' : 'client',gyvora_id:null} as Profile);
+      setGyms(type === 'dashboard' ? [] : [{id:'demo-gym',name:base.gym.name,owner_id: id,created_at:'',frozen_at:null,freeze_note:'',deleted_at:null,deletion_note:'',deletion_history:[],gyvora_id:''}]);
+      setGymId(type === 'gym' ? 'demo-gym' : '');
+      setRole(type === 'dashboard' ? 'super_admin' : type === 'gym' ? 'Owner' : 'Client');
+      setPermissions([]); setVerified(true); setIsAdmin(false);
       setLoading(false);
+      return;
+    }
+    if (import.meta.env.DEV) {
+      generation.current++;
+      bindPersistence(undefined);
+      setProfile(null); setGyms([]); setGymId(''); setRole(''); setPermissions([]); setVerified(false); setIsAdmin(false); setLoading(false);
       return;
     }
     const info = getDemoSessionInfo();
@@ -372,6 +393,12 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   async function logout() {
     await router.options.context?.queryClient.cancelQueries();
     router.options.context?.queryClient.clear();
+    if (readPreviewSession()) {
+      savePreviewSession(null); clearPrototypeStorage(); resetPrototypeData(); bindPersistence(undefined);
+      setProfile(null); setGyms([]); setGymId(''); setRole(''); setPermissions([]); setVerified(false);
+      await router.navigate({to:'/',replace:true});
+      return;
+    }
     savePreviewSession(null);
     const demo = getDemoSession();
     setDemoSession(null);
@@ -421,8 +448,11 @@ export function AccessBoundary({ children }: { children: ReactNode }) {
   if (publicPaths.includes(path)) return children;
   if (!hydrated) return <div className="p-12 text-muted-foreground">Loading your account…</div>;
   const preview = readPreviewSession();
-  // Do not mount real account pages, their queries, or legacy demo stores.
-  if (preview) return <PreviewWorkspace session={preview} logout={c.logout}/>;
+  if (preview) {
+    if (c.loading || !c.profile) return <div className="p-12 text-muted-foreground">Opening prototype…</div>;
+    const allowed = preview.type === 'dashboard' ? path.startsWith('/super-admin') : preview.type === 'individual' ? isClientPortalPath(path) : !path.startsWith('/super-admin') && !isClientPortalPath(path);
+    return <><div role="status" className="border-b bg-secondary px-4 py-3 text-center text-sm text-muted-foreground">Prototype only — no real account or verification is created</div>{allowed ? children : <div className="p-12"><p>This page belongs to another prototype account type.</p><Button asChild className="mt-4"><Link to="/">Back to login</Link></Button></div>}</>;
+  }
   if (c.loading) return <div className="p-12 text-muted-foreground">Loading your account…</div>;
   const demo = getDemoSession();
   if (demo === "super") {

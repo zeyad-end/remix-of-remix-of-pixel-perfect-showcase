@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useHydrated } from '@tanstack/react-router';
+import { createFileRoute, Link, useHydrated, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,10 @@ import { AccountTypeSelector } from '@/components/AccountTypeSelector';
 import { AppleIcon, GoogleIcon } from '@/components/SocialSignIn';
 import { verifyPreviewSignup, type PreviewChallenge } from '@/lib/preview-session';
 import { AppBrand } from '@/components/AppBrand';
+import { supabase } from '@/integrations/supabase/client';
 
 export const Route = createFileRoute('/register')({
-  head: () => seo('Create account prototype', 'Review the simulated GYVORA Gym and Client account-creation flow. No accounts or codes are created.'),
+  head: () => seo('Create account', 'Create a GYVORA Gym or Client account.'),
   component: Register,
 });
 function Register() {

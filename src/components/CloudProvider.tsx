@@ -222,6 +222,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     if (prototype) {
       generation.current++;
       bindPersistence(undefined);
+      resetPrototypeData();
       const id = demoUserId('reviewer@example.test');
       const type = prototype.type;
       const base = structuredClone(initialState);
@@ -372,6 +373,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   }
   useEffect(() => {
     void refresh();
+    if (import.meta.env.DEV) return () => bindPersistence(undefined);
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {

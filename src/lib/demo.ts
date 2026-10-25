@@ -13,7 +13,7 @@ import { demoIdentity, demoIdentityMatches, ensureDemoIdentity } from './demo-id
 import { normalizeAccountLookup } from './gyvora-id';
 import { validateMembershipChanges } from './membership-link';
 import { gymToday } from './gym-reporting';
-import { readSampleRequest } from './prototype-scenario';
+import { readSampleRequests } from './prototype-scenario';
 
 /**
  * Prototype-only demo layer. Completely isolated from production auth and the
@@ -35,7 +35,7 @@ export type DemoSessionInfo = {
 
 export function getDemoSessionInfo(): DemoSessionInfo | null {
   const prototype = readPreviewSession();
-  if (prototype) return { kind: prototype.type === 'dashboard' ? 'super' : prototype.type === 'gym' ? 'owner' : 'individual', email: 'reviewer@example.test', name: 'Prototype reviewer', directAccess: true };
+  if (prototype) return { kind: prototype.type === 'dashboard' ? 'super' : prototype.type === 'gym' ? 'owner' : 'individual', email: prototype.scenarioKey ?? 'reviewer@example.test', name: 'Prototype reviewer', directAccess: true };
   try {
     const v = prototypeStorage().getItem(SESSION_KEY);
     if (!v) return null;
@@ -208,6 +208,7 @@ export type GymRequest = {
   plan: string;
   requestDate: string;
   status: "Pending" | "Approved" | "Rejected";
+  decisionNote?: string;
   decidedAt?: string;
 };
 
@@ -533,9 +534,17 @@ function load(): DemoState {
 
 let demoState: DemoState = load();
 export function resetPrototypeData() {
-  demoState = structuredClone(seed);
-  const sample = readSampleRequest();
-  if(readPreviewSession() && sample) demoState.requests.unshift({...sample,ownerName:'Prototype reviewer',email:'reviewer@example.test',phone:'',submittedAt:sample.requestDate});
+  demoState = load();
+  if (readPreviewSession()) {
+    const samples = readSampleRequests();
+    const rows = Object.entries(samples).map(([scope, sample]) => {
+      const id = `prototype-${scope}`;
+      const saved = demoState.requests.find(r => r.id === id);
+      return {...sample, id, ownerName:'Prototype reviewer', email:scope, phone:'', submittedAt:sample.requestDate, ...(saved ? {status:saved.status, decisionNote:saved.decisionNote, decidedAt:saved.decidedAt} : {})};
+    });
+    demoState.requests = [...rows, ...demoState.requests.filter(r => !r.id.startsWith('prototype-'))];
+    prototypeStorage().setItem(DATA_KEY, JSON.stringify(demoState));
+  }
   listeners.forEach(l => l());
 }
 
@@ -947,10 +956,10 @@ export function approveRequest(id: string) {
   });
 }
 
-export function rejectRequest(id: string) {
+export function rejectRequest(id: string, note = '') {
   commit({
     ...demoState,
-    requests: demoState.requests.map((r) => (r.id === id && r.status === "Pending" ? { ...r, status: "Rejected", decidedAt: today() } : r)),
+    requests: demoState.requests.map((r) => (r.id === id && r.status === "Pending" ? { ...r, status: "Rejected", decidedAt: today(), decisionNote:note.trim().slice(0,1000) } : r)),
   });
 }
 

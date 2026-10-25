@@ -478,6 +478,7 @@ export type Database = {
           gym_id: string | null
           gym_name: string
           id: string
+          phone: string
           plan: string
           status: string
           trial_started_at: string | null
@@ -490,6 +491,7 @@ export type Database = {
           gym_id?: string | null
           gym_name: string
           id?: string
+          phone?: string
           plan: string
           status?: string
           trial_started_at?: string | null
@@ -502,6 +504,7 @@ export type Database = {
           gym_id?: string | null
           gym_name?: string
           id?: string
+          phone?: string
           plan?: string
           status?: string
           trial_started_at?: string | null
@@ -881,6 +884,32 @@ export type Database = {
         Returns: undefined
       }
       start_owner_trial: { Args: never; Returns: Json }
+      submit_owner_request: {
+        Args: {
+          request_name: string
+          request_phone: string
+          request_plan: string
+        }
+        Returns: {
+          created_at: string
+          decided_at: string | null
+          decision_by: string | null
+          gym_id: string | null
+          gym_name: string
+          id: string
+          phone: string
+          plan: string
+          status: string
+          trial_started_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "owner_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never

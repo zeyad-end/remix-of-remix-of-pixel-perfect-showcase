@@ -475,6 +475,7 @@ export type Database = {
           created_at: string
           decided_at: string | null
           decision_by: string | null
+          decision_note: string
           gym_id: string | null
           gym_name: string
           id: string
@@ -488,6 +489,7 @@ export type Database = {
           created_at?: string
           decided_at?: string | null
           decision_by?: string | null
+          decision_note?: string
           gym_id?: string | null
           gym_name: string
           id?: string
@@ -501,6 +503,7 @@ export type Database = {
           created_at?: string
           decided_at?: string | null
           decision_by?: string | null
+          decision_note?: string
           gym_id?: string | null
           gym_name?: string
           id?: string
@@ -863,6 +866,10 @@ export type Database = {
         Args: { accept: boolean; invitation_id: string }
         Returns: undefined
       }
+      review_owner_request: {
+        Args: { approve: boolean; note?: string; request_id: string }
+        Returns: string
+      }
       save_gym_records: {
         Args: { changes: Json; g: string }
         Returns: undefined
@@ -894,6 +901,7 @@ export type Database = {
           created_at: string
           decided_at: string | null
           decision_by: string | null
+          decision_note: string
           gym_id: string | null
           gym_name: string
           id: string

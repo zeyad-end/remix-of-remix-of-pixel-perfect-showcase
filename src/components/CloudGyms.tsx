@@ -78,7 +78,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
           <tr key={g.id}>
             <td className={td}>{i + 1}</td>
             <td className={td}>{g.name}</td>
-            <td className={td}>{g.ownerName || '—'}{g.ownerEmail ? <span className="block text-xs text-muted-foreground">{g.ownerEmail}</span> : null}</td>
+            <td className={td}>{g.ownerName || '—'}<span className="block text-xs text-muted-foreground">Email: {g.ownerEmail || 'Not provided'}</span><span className="block text-xs text-muted-foreground">Phone: {g.ownerPhone || 'Not provided'}</span></td>
             {deleted ? <>
               <td className={td}>{g.deletedAt ? new Date(g.deletedAt).toLocaleString() : '—'}</td>
               <td className={`${td} max-w-sm whitespace-pre-wrap break-words`}>{g.deletionNote || '—'}</td>

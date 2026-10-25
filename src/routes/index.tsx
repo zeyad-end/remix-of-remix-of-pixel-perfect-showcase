@@ -1,14 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCloud } from "@/components/CloudProvider";
 import { useEffect, useState } from "react";
-import { Building2, User, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
 import { seo } from "@/lib/seo";
-import { type DemoAccountType } from "@/lib/demo";
+import { createPreviewSession, savePreviewSession, type PreviewAccountType } from '@/lib/preview-session';
+import { AccountTypeSelector } from '@/components/AccountTypeSelector';
 import { getPrototypePreference, savePrototypePreference } from "@/lib/prototype-login";
 import { supabase } from "@/integrations/supabase/client";
 import { setDemoSession } from "@/lib/demo";
@@ -35,7 +34,7 @@ function WhatsAppGlyph() {
 
 
 function Login() {
-  const [destination, setDestination] = useState<DemoAccountType>("gym");
+  const [destination, setDestination] = useState<PreviewAccountType>("gym");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,7 +49,7 @@ function Login() {
   useEffect(() => {
     const preference = getPrototypePreference();
     if (preference) {
-      setDestination(preference.destination);
+      setDestination(preference.destination === 'individual' ? 'individual' : 'gym');
       setName(preference.name);
       setEmail(preference.email);
       setRemember(true);
@@ -66,6 +65,17 @@ function Login() {
     e.preventDefault();
     setBusy(true);setError('');
     try {
+      if (import.meta.env.DEV) {
+        const session = createPreviewSession(destination,name,email,password,true);
+        await cloud.logout();
+        // Remove any provider session before entering the isolated workspace.
+        await supabase.auth.signOut({scope:'local'});
+        savePreviewSession(session);
+        await cloud.refresh();
+        await navigate({to:destination === 'gym' ? '/dashboard' : '/member'});
+        return;
+      }
+      savePreviewSession(null);
       setDemoSession(null);
       const identifier=email.trim();
       if (!identifier || !password) throw new Error('Enter your email or phone and password.');
@@ -100,16 +110,9 @@ function Login() {
           <AppBrand large className="mb-8" />
           <h1 className="text-3xl font-semibold">Welcome back</h1>
           <p className="mt-1 text-sm text-muted-foreground">Sign in to your account</p>
-          {created && <p role="status" className="mt-3 text-sm text-success">Account created. Sign in with your email or phone and password.</p>}
+          {created && <p role="status" className="mt-3 text-sm text-success">{import.meta.env.DEV ? 'Preview signup completed. No real account was created.' : 'Account created. Sign in with your email or phone and password.'}</p>}
 
-          <div className="mt-8 grid grid-cols-3 gap-1 rounded-lg border bg-card p-1" role="group" aria-label="Account type">
-            {([["gym", "Gym Account", Building2], ["individual", "Client / Individual", User], ["dashboard", "Dashboard", LayoutDashboard]] as const).map(([key, label, Icon]) => (
-              <Button type="button" variant="ghost" key={key} onClick={() => setDestination(key)} aria-pressed={destination === key}
-                className={cn("h-16 min-w-0 flex-col gap-1 rounded-md px-1 text-xs font-medium transition-colors", destination === key ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                <Icon className="h-4 w-4 shrink-0" /><span className="whitespace-normal text-center leading-tight">{label}</span>
-              </Button>
-            ))}
-          </div>
+          <div className="mt-8"><AccountTypeSelector value={destination} onChange={setDestination}/></div>
 
           <form className="mt-6 space-y-4" onSubmit={signIn} noValidate>
             <div className="space-y-2"><Label htmlFor="demo-name">Name</Label><Input id="demo-name" name="name" value={name} onChange={e => setName(e.target.value)} autoComplete="name" className="h-11 bg-card" /></div>

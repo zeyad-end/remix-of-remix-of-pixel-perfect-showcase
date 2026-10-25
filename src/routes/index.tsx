@@ -50,6 +50,24 @@ function Login() {
     e.preventDefault();
     setBusy(true);setError('');
     try {
+      // Saved accounts sign in with their email and password first.
+      const identifier = email.trim();
+      if (identifier.includes('@') && password) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email: identifier, password });
+        if (!signInError) {
+          await router.options.context.queryClient.cancelQueries();
+          router.options.context.queryClient.clear();
+          clearPrototypeStorage(); resetPrototypeData();
+          savePreviewSession(null);
+          await cloud.refresh();
+          setName(''); setEmail(''); setPhone(''); setPassword('');
+          await navigate({ to: await resolveDestination() });
+          return;
+        }
+        if (!import.meta.env.DEV) throw new Error('Incorrect email or password.');
+      } else if (!import.meta.env.DEV) {
+        throw new Error('Sign in with your account email and password.');
+      }
       if (import.meta.env.DEV) {
         const contact = destination === 'gym' ? phone.trim() || email.trim() : email.trim();
         const session = createPreviewSession(destination,name,contact,password,true);
@@ -65,7 +83,6 @@ function Login() {
         await navigate({to:destination === 'dashboard' ? '/super-admin' : destination === 'gym' ? '/subscription-request' : '/member'});
         return;
       }
-      throw new Error('Prototype only — no real account or verification is created. Dashboard navigation is available in development preview.');
     }catch(e){setError(e instanceof Error?e.message:'Could not sign in.');}
     finally{setBusy(false);}
   }

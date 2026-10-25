@@ -29,9 +29,9 @@ export const listAdminGyms=createServerFn({method:'POST'}).middleware([requireSu
   if(error)throw new Error('Could not load gyms.');
   const ids=[...new Set((gyms??[]).map(g=>g.owner_id))];
   const {supabaseAdmin}=await import('@/integrations/supabase/client.server');
-  const {data:profiles}=ids.length?await supabaseAdmin.from('profiles').select('id,full_name,email').in('id',ids):{data:[] as {id:string;full_name:string;email:string}[]};
-  const {data:requests}=await context.supabase.from('owner_requests').select('gym_id,plan,status');
-  return (gyms??[]).filter(g=>g.deleted_at || requests?.some(r=>r.gym_id===g.id&&r.status==='Approved')).map(g=>({id:g.id,name:g.name,ownerId:g.owner_id,ownerName:profiles?.find(p=>p.id===g.owner_id)?.full_name||'',ownerEmail:profiles?.find(p=>p.id===g.owner_id)?.email||'',plan:requests?.find(r=>r.gym_id===g.id)?.plan??'',deleted:!!g.deleted_at,deletedAt:g.deleted_at,deletionNote:g.deletion_note,frozen:!!g.frozen_at,freezeNote:g.freeze_note??''}));
+  const {data:profiles}=ids.length?await supabaseAdmin.from('profiles').select('id,full_name,email,phone').in('id',ids):{data:[] as {id:string;full_name:string;email:string;phone:string}[]};
+  const {data:requests}=await context.supabase.from('owner_requests').select('gym_id,plan,status,phone');
+  return (gyms??[]).filter(g=>g.deleted_at || requests?.some(r=>r.gym_id===g.id&&r.status==='Approved')).map(g=>({id:g.id,name:g.name,ownerId:g.owner_id,ownerName:profiles?.find(p=>p.id===g.owner_id)?.full_name||'',ownerEmail:profiles?.find(p=>p.id===g.owner_id)?.email||'',ownerPhone:requests?.find(r=>r.gym_id===g.id)?.phone||profiles?.find(p=>p.id===g.owner_id)?.phone||'',plan:requests?.find(r=>r.gym_id===g.id)?.plan??'',deleted:!!g.deleted_at,deletedAt:g.deleted_at,deletionNote:g.deletion_note,frozen:!!g.frozen_at,freezeNote:g.freeze_note??''}));
 });
 
 export const changeGymDeletion=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(input=>z.object({gymId:z.string().uuid(),deleted:z.boolean(),note:z.string().trim().max(1000).default('')}).strict().parse(input)).handler(async({data,context})=>{

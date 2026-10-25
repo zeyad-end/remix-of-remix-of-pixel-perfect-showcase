@@ -7,6 +7,7 @@ export type OwnerGate = {
   gymId: string | null;
   frozen: boolean;
   freezeNote: string;
+  decisionNote?: string;
   requestStatus: string | null;
   plan: string | null;
   gymName: string | null;

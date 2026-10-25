@@ -487,7 +487,8 @@ function OwnerGateBoundary({ children }: { children: ReactNode }) {
         {gate.freezeNote.trim() && (
           <p className="mt-4 rounded-md border bg-card p-4 text-sm"><span className="font-medium">Reason: </span>{gate.freezeNote}</p>
         )}
-        <div className="mt-4">{contact}</div>
+        <p className="mt-4 text-sm text-muted-foreground">Contact an administrator to learn more.</p>
+        <div className="mt-2">{contact}</div>
         <Button className="mt-6" variant="outline" onClick={() => void c.logout()}>Log out</Button>
       </div>
     );
@@ -497,6 +498,7 @@ function OwnerGateBoundary({ children }: { children: ReactNode }) {
       <div className="mx-auto max-w-md p-10">
         <h1 className="text-2xl">Subscription request rejected</h1>
         <p className="mt-2 text-muted-foreground">Your request was rejected, so the Gym Owner dashboard is unavailable. Contact the administrator.</p>
+        {gate.decisionNote?.trim() && <p className="mt-4 whitespace-pre-wrap break-words rounded-md border bg-card p-4 text-sm"><span className="font-medium">Reason: </span>{gate.decisionNote}</p>}
         <Button asChild className="mt-6"><Link to="/subscription-request">View subscription</Link></Button>
       </div>
     );

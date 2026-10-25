@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { seo } from "@/lib/seo";
-import { createPreviewSession, savePreviewSession, type PreviewAccountType } from '@/lib/preview-session';
+import { createPreviewSession, prototypeContactKey, savePreviewSession, type PreviewAccountType } from '@/lib/preview-session';
+import { readSampleRequest, saveSampleRequest } from '@/lib/prototype-scenario';
 import { AccountTypeSelector } from '@/components/AccountTypeSelector';
 import { resetPrototypeData } from "@/lib/demo";
 import { clearPrototypeStorage } from '@/lib/prototype-storage';
@@ -50,10 +51,13 @@ function Login() {
     try {
       if (import.meta.env.DEV) {
         const session = createPreviewSession(destination,name,email,password,true);
+        if (destination === 'gym') session.scenarioKey = await prototypeContactKey(email);
         await router.options.context.queryClient.cancelQueries();
         router.options.context.queryClient.clear();
         clearPrototypeStorage(); resetPrototypeData();
         savePreviewSession(session);
+        const savedRequest = destination === 'gym' ? readSampleRequest() : null;
+        if (savedRequest) saveSampleRequest(savedRequest);
         await cloud.refresh();
         setName(''); setEmail(''); setPassword('');
         await navigate({to:destination === 'dashboard' ? '/super-admin' : destination === 'gym' ? '/subscription-request' : '/member'});

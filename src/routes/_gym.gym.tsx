@@ -12,6 +12,8 @@ import g1 from "@/assets/gallery-1.jpg";
 import g2 from "@/assets/gallery-2.jpg";
 import { useCloud } from '@/components/CloudProvider';
 import { canChange } from '@/lib/gym-permissions';
+import { readPreviewSession } from '@/lib/preview-session';
+import { SampleAccountQR } from '@/components/SampleAccountQR';
 
 export const Route = createFileRoute("/_gym/gym")({
   head: () => seo("Gym profile", "Manage your gym's public profile, plans, trainers and gallery."),
@@ -39,7 +41,7 @@ function GymProfile() {
             <div className="min-w-0">
               <h1 className="truncate text-2xl font-semibold sm:text-3xl">{gym.name}</h1>
               <p className="text-sm text-muted-foreground">{gym.tagline}</p>
-              {c.gyms.find(g=>g.id===c.gymId)?.gyvora_id&&<p className="mt-1 break-all text-xs text-muted-foreground">GYVORA ID · {c.gyms.find(g=>g.id===c.gymId)?.gyvora_id}</p>}
+              {c.gyms.find(g=>g.id===c.gymId)?.gyvora_id&&<p className="mt-1 break-all text-xs text-muted-foreground">{readPreviewSession() ? "Sample GYVORA ID" : "GYVORA ID"} · {c.gyms.find(g=>g.id===c.gymId)?.gyvora_id}</p>}
               <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-primary" />{gym.location}</span>
                 <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-primary" />{fmt12(gym.hoursByDay[0]?.open ?? "08:00")} – {fmt12(gym.hoursByDay[0]?.close ?? "23:00")}</span>
@@ -54,6 +56,7 @@ function GymProfile() {
         </div>
       </div>
 
+      {readPreviewSession() && <SampleAccountQR kind="gym"/>}
       <div className="grid gap-6 lg:grid-cols-3">
         <Panel title="About the gym" className="lg:col-span-2">
           <p className="text-sm leading-relaxed text-muted-foreground">{gym.description}</p>

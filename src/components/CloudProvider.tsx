@@ -22,6 +22,7 @@ import { reserveDemoIdentities } from '@/lib/demo-identities.functions';
 import { syncDemoIdentities, demoIdentity } from '@/lib/demo-identities';
 import { readPreviewSession, savePreviewSession } from '@/lib/preview-session';
 import { clearPrototypeStorage, prototypeStorage } from '@/lib/prototype-storage';
+import { readSampleRequest, SAMPLE_CLIENT_ID, SAMPLE_GYM_ID } from '@/lib/prototype-scenario';
 import {
   getDemoSession,
   getDemoSessionInfo,
@@ -226,14 +227,16 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       const id = demoUserId('reviewer@example.test');
       const type = prototype.type;
       const base = structuredClone(initialState);
+      const sampleRequest = readSampleRequest();
+      if(sampleRequest) base.gym.name = sampleRequest.gymName;
       if (type === 'individual') {
         base.members = base.members.slice(0, 1).map(m => ({...m, clientId: id}));
         prototypeStorage().setItem('ironhaus-demo-gym:demo-gym', JSON.stringify(base));
         prototypeStorage().setItem(`ironhaus-client-links:${id}`, JSON.stringify([{gymId:'demo-gym',favorite:false}]));
       }
       hydrateState(base);
-      setProfile({id,full_name: 'Prototype reviewer',email:'reviewer@example.test',phone:'',photo:'',account_type:type === 'gym' ? 'owner' : 'client',gyvora_id:null} as Profile);
-      setGyms(type === 'dashboard' ? [] : [{id:'demo-gym',name:base.gym.name,owner_id: id,created_at:'',frozen_at:null,freeze_note:'',deleted_at:null,deletion_note:'',deletion_history:[],gyvora_id:''}]);
+      setProfile({id,full_name: 'Prototype reviewer',email:'reviewer@example.test',phone:'',photo:'',account_type:type === 'gym' ? 'owner' : 'client',gyvora_id:type === 'gym' ? SAMPLE_GYM_ID : type === 'individual' ? SAMPLE_CLIENT_ID : null} as Profile);
+      setGyms(type === 'dashboard' ? [] : [{id:'demo-gym',name:base.gym.name,owner_id: id,created_at:'',frozen_at:null,freeze_note:'',deleted_at:null,deletion_note:'',deletion_history:[],gyvora_id:SAMPLE_GYM_ID}]);
       setGymId(type === 'gym' ? 'demo-gym' : '');
       setRole(type === 'dashboard' ? 'super_admin' : type === 'gym' ? 'Owner' : 'Client');
       setPermissions([]); setVerified(true); setIsAdmin(false);

@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Field, PageHeader } from '@/components/kit';
 import { seo } from '@/lib/seo';
+import { readPreviewSession } from '@/lib/preview-session';
+import { PrototypeSubscriptionRequest } from '@/components/PrototypeSubscriptionRequest';
 
 export const Route = createFileRoute('/subscription-request')({
   head: () => seo('Gym subscription request', 'Choose a Monthly or Annual GYVORA subscription and request administrator approval.'),
@@ -25,6 +27,9 @@ const OPTIONS = [
 const SENT = 'Your request has been sent and is waiting for approval from an administrator.';
 
 function Request() {
+  return readPreviewSession()?.type === 'gym' ? <PrototypeSubscriptionRequest/> : <ExistingRequest/>;
+}
+function ExistingRequest() {
   const c = useCloud();
   const navigate = useNavigate();
   const router = useRouter();

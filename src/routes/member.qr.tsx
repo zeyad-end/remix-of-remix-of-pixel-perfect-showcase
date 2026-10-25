@@ -7,6 +7,8 @@ import { QRCodeSVG } from "qrcode.react";
 import { Download, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { seo } from "@/lib/seo";
+import { readPreviewSession } from '@/lib/preview-session';
+import { SampleAccountQR } from '@/components/SampleAccountQR';
 export const Route = createFileRoute("/member/qr")({
   head: () =>
     seo("My permanent QR", "Share or download your permanent GYVORA account ID and private QR code."),
@@ -17,6 +19,7 @@ function MemberQR() {
   const ref = useRef<HTMLDivElement>(null);
   const id = c.profile?.gyvora_id;
   const qrValue = id ?? '';
+  if(readPreviewSession()) return <ClientShell title="My sample QR"><div className="mx-auto max-w-lg"><SampleAccountQR kind="client"/></div></ClientShell>;
   async function image() {
     const svg = ref.current?.querySelector("svg");
     if (!svg) throw new Error("QR unavailable");

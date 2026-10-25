@@ -147,6 +147,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         (base[key] as unknown[]).push(key === 'members' ? { ...data, email: data['email'] ?? '' } : data);
       }
     }
+    base.gym.name = gyms.find(g => g.id === id)?.name ?? base.gym.name;
     if (r?.role !== "Client") {
       try {
         base.staff = await staffFetch({ data: { gymId: id } });

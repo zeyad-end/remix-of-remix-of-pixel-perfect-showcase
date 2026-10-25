@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
-import { listAdminGyms, setGymFrozen, changeGymDeletion } from '@/lib/platform-admin.functions';
+import { listAdminGyms, setGymFrozen, changeGymDeletion, editAdminGym } from '@/lib/platform-admin.functions';
+import { Input } from './ui/input';
+import { Field } from './kit';
 import { Button } from './ui/button';
 import { DataTable, PageHeader, td } from './kit';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
@@ -15,6 +17,9 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
   const list = useServerFn(listAdminGyms);
   const freeze = useServerFn(setGymFrozen);
   const remove = useServerFn(changeGymDeletion);
+  const saveGym = useServerFn(editAdminGym);
+  const [editing,setEditing]=useState<AdminGym|null>(null);
+  const [gymName,setGymName]=useState('');
   const [rows, setRows] = useState<AdminGym[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -73,11 +78,17 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
     <div>
       <PageHeader title={deleted ? "Deleted Gyms" : "Approved Gyms"} subtitle={`Total ${deleted ? "deleted" : "approved"} gyms: ${visibleRows.length}`} />
       {error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
-      <DataTable head={deleted ? ['#','Gym Name','Owner','Deletion date','Notes / Reason','Actions'] : ['#', 'Gym Name', 'Owner', 'Plan', 'Status', 'Freeze note', 'Actions']}>
+      <DataTable head={deleted ? ['#','Gym Name','Owner','Deletion date','Notes / Reason','Actions'] : ['#', 'Gym Name', 'Actions', 'Owner', 'Plan', 'Status', 'Freeze note']}>
         {visibleRows.map((g, i) => (
           <tr key={g.id}>
             <td className={td}>{i + 1}</td>
             <td className={td}>{g.name}</td>
+            {!deleted && <td className={`${td} min-w-[260px]`}><div className="flex flex-nowrap gap-2">
+              <Button size="sm" variant="outline" disabled={busy} onClick={()=>{setEditing(g);setGymName(g.name);}}>Edit</Button>
+              {g.frozen ? <Button size="sm" variant="secondary" disabled={busy} onClick={()=>void unfreeze(g)}>Unfreeze</Button> : <Button size="sm" variant="secondary" disabled={busy} onClick={()=>{setFreezing(g);setNote('');}}>Freeze</Button>}
+              <Button size="sm" variant="destructive" disabled={busy} onClick={()=>{setDeleting(g);setDeletionNote('');}}>Delete</Button>
+              <Button size="icon" variant="ghost" aria-label={`Message ${g.name} owner`} disabled={busy} onClick={()=>{setMessaging(g);setMessageBody('');}}><MessageSquare className="h-4 w-4"/></Button>
+            </div></td>}
             <td className={td}>{g.ownerName || '—'}<span className="block text-xs text-muted-foreground">Email: {g.ownerEmail || 'Not provided'}</span><span className="block text-xs text-muted-foreground">Phone: {g.ownerPhone || 'Not provided'}</span></td>
             {deleted ? <>
               <td className={td}>{g.deletedAt ? new Date(g.deletedAt).toLocaleString() : '—'}</td>
@@ -87,18 +98,12 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
               <td className={td}>{g.plan || '—'}</td>
               <td className={td}><span className={g.frozen ? 'text-destructive' : 'text-success'}>{g.frozen ? 'Frozen' : 'Active'}</span></td>
               <td className={td}>{g.frozen && g.freezeNote ? g.freezeNote : '—'}</td>
-              <td className={td}><div className="flex flex-wrap gap-2">
-                <Button size="icon" variant="ghost" aria-label={`Message ${g.name} owner`} title="Message gym owner" disabled={busy} onClick={()=>{setMessaging(g);setMessageBody('');}}><MessageSquare className="h-4 w-4"/></Button>
-                {g.frozen
-                ? <Button size="sm" variant="secondary" disabled={busy} onClick={()=>void unfreeze(g)}>Unfreeze</Button>
-                : <Button size="sm" variant="secondary" disabled={busy} onClick={()=>{setFreezing(g);setNote('');}}>Freeze</Button>}
-                <Button size="sm" variant="destructive" disabled={busy} onClick={()=>{setDeleting(g);setDeletionNote('');}}>Delete</Button>
-              </div></td>
             </>}
           </tr>
         ))}
       </DataTable>
       {!visibleRows.length && <p className="py-6 text-muted-foreground">{deleted ? "No deleted gyms." : "No approved gyms yet. Approve a request to add one."}</p>}
+      <Dialog open={!!editing} onOpenChange={open=>{if(!open)setEditing(null);}}><DialogContent><DialogHeader><DialogTitle>Edit gym</DialogTitle></DialogHeader><form className="space-y-4" onSubmit={async e=>{e.preventDefault();if(!editing)return;setBusy(true);try{await saveGym({data:{gymId:editing.id,name:gymName}});setEditing(null);await load();toast.success('Gym details saved.');}catch(e){setError(e instanceof Error?e.message:'Could not save gym.');}finally{setBusy(false);}}}><Field label="Gym name"><Input required maxLength={100} value={gymName} onChange={e=>setGymName(e.target.value)}/></Field><DialogFooter><Button type="button" variant="outline" onClick={()=>setEditing(null)}>Cancel</Button><Button disabled={busy}>Save</Button></DialogFooter></form></DialogContent></Dialog>
 
       <Dialog open={!!deleting || !!restoring} onOpenChange={open=>{if(!open){setDeleting(null);setRestoring(null);}}}>
         <DialogContent><DialogHeader><DialogTitle>{deleting ? 'Delete' : 'Restore'} {(deleting ?? restoring)?.name}</DialogTitle></DialogHeader>

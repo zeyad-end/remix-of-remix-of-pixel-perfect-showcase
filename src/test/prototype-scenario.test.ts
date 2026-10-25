@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { makeSampleRequest, prototypeTrialActive, readSampleRequest, resetSampleRequest, sampleEntryStep, saveSampleRequest, startSampleTrial, SAMPLE_CLIENT_ID, SAMPLE_GYM_ID } from '@/lib/prototype-scenario';
 import { createPreviewSession, createStablePreviewSession, prototypeContactKey, savePreviewSession } from '@/lib/preview-session';
-import { approveRequest, rejectRequest, setGymStatus, getDemoState, resetPrototypeData } from '@/lib/demo';
+import { approveRequest, rejectRequest, setGymStatus, editGym, deleteGym, getDemoState, resetPrototypeData } from '@/lib/demo';
 
 afterEach(()=>{resetSampleRequest();savePreviewSession(null);resetPrototypeData();localStorage.clear();});
 describe('fictional subscription and ID review',()=>{
@@ -90,5 +90,27 @@ describe('fictional subscription and ID review',()=>{
     setGymStatus(approved.id,'Active');resetPrototypeData();
     expect(getDemoState().gyms.find(g=>g.id===approved.id)?.status).toBe('Active');
     expect(localStorage.getItem('ironhaus-demo-data-v1')).toBe('legacy untouched');
+  });
+  it('links saved admin edits and retained deletion to the same approved owner', async () => {
+    const owner=await createStablePreviewSession('gym','Owner','actions@example.test','anything',true);
+    savePreviewSession(owner);
+    saveSampleRequest(makeSampleRequest('Before edit','Monthly Plan',false,'2026-10-25'));resetPrototypeData();
+    savePreviewSession(await createStablePreviewSession('dashboard','Admin','reviewer','any',true));resetPrototypeData();
+    const requestId=`prototype-${owner.scenarioKey}`;
+    approveRequest(requestId);
+    const gym=getDemoState().gyms.find(g=>g.email===owner.scenarioKey);
+    if(!gym)throw new Error('Missing gym');
+    editGym(gym.id,{name:'Saved edited gym',plan:'Annual Plan',notes:'Saved gym details'});
+    resetPrototypeData();
+    expect(getDemoState().requests.find(r=>r.id===requestId)).toMatchObject({gymName:'Saved edited gym',plan:'Annual Plan',status:'Approved'});
+    savePreviewSession(owner);resetPrototypeData();
+    expect(readSampleRequest()).toMatchObject({gymName:'Saved edited gym',plan:'Annual Plan'});
+    expect(()=>setGymStatus(gym.id,'Frozen','owner attempt')).toThrow('Administrator');
+    savePreviewSession(await createStablePreviewSession('dashboard','Admin','reviewer','any',true));resetPrototypeData();
+    deleteGym(gym.id,'Fictional ban reason');
+    savePreviewSession(owner);resetPrototypeData();
+    expect(getDemoState().gyms.find(g=>g.id===gym.id)).toMatchObject({name:'Saved edited gym',deletionNote:'Fictional ban reason',notes:'Saved gym details'});
+    expect(getDemoState().gyms.find(g=>g.id===gym.id)?.deletedAt).toBeTruthy();
+    expect(getDemoState().requests.find(r=>r.id===requestId)?.status).toBe('Approved');
   });
 });

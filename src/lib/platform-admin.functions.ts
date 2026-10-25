@@ -40,6 +40,19 @@ export const changeGymDeletion=createServerFn({method:'POST'}).middleware([requi
   return true;
 });
 
+export const editAdminGym = createServerFn({method:'POST'}).middleware([requireSupabaseAuth])
+  .inputValidator(input => z.object({gymId:z.string().uuid(),name:z.string().trim().min(1).max(100)}).strict().parse(input))
+  .handler(async ({data,context}) => {
+    const {data:allowed,error:roleError}=await context.supabase.rpc('is_super_admin');
+    if(roleError || !allowed) throw new Error('Administrator access required');
+    const {supabaseAdmin}=await import('@/integrations/supabase/client.server');
+    const {data:gym,error}=await supabaseAdmin.from('gyms').select('id').eq('id',data.gymId).maybeSingle();
+    if(error || !gym) throw new Error('Gym not found.');
+    const {error:updateError}=await supabaseAdmin.from('gyms').update({name:data.name}).eq('id',gym.id);
+    if(updateError) throw new Error('Could not save gym details.');
+    return true;
+  });
+
 export const deleteGymAccount=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(input=>z.object({gymId:z.string().uuid()}).parse(input)).handler(async({data,context})=>{
   const {data:allowed,error:roleError}=await context.supabase.rpc('is_super_admin');
   if(roleError||!allowed)throw new Error('Administrator access required');

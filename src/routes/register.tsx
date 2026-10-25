@@ -64,9 +64,9 @@ function Register() {
   return <div className="flex min-h-screen items-center justify-center px-6 py-12"><div className="w-full max-w-lg">
     <AppBrand large className="mb-8"/>
     <h1 className="text-2xl font-semibold">Create your account</h1>
-    <p role="status" className="mt-3 text-sm text-muted-foreground">Prototype only — no real account or verification is created</p>
-    {success ? <div className="mt-8 space-y-4"><h2 className="text-xl font-semibold">Prototype signup complete</h2><p className="text-sm text-muted-foreground">No account was created. No entered details were saved.</p><Button asChild><Link to="/">Back to login</Link></Button></div> :
-    <form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={e => {e.preventDefault();if(!email.trim()&&!phone.trim()){setError('Enter at least one contact method.');return;}if(!verified){setError('Send a simulated code and select Verify first.');return;}e.currentTarget.reset();setEmail('');setPhone('');setCode('');setChallenge(null);setSuccess(true);}}>
+    <p role="status" className="mt-3 text-sm text-muted-foreground">Creates a real saved account. In this preview the code step is simulated — no email or SMS is sent.</p>
+    {success ? <div className="mt-8 space-y-4"><h2 className="text-xl font-semibold">Account created</h2><p className="text-sm text-muted-foreground">Your account was saved. Sign in with your email and password.</p><Button onClick={() => void navigate({ to: '/', search: { created: true } })}>Back to login</Button></div> :
+    <form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={e => {void createAccount(e);}}>
       <div className="sm:col-span-2"><AccountTypeSelector value={accountType} onChange={value => {if(value==='dashboard')return;setAccountType(value);changed();}}/></div>
       <Field label="Full Name" className="sm:col-span-2"><Input name="full_name" required maxLength={100} autoComplete="off"/></Field>
       <Field label="Email" className="sm:col-span-2"><div className="flex gap-2"><Input name="email" type="email" value={email} onChange={e => {setEmail(e.target.value);changed();}} autoComplete="off"/><Button type="button" variant="outline" aria-label="Send code to email" onClick={() => send('email')}>Send Code</Button></div></Field>

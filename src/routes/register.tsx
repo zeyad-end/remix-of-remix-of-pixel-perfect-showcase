@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useHydrated } from '@tanstack/react-router';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/kit';
 import { seo } from '@/lib/seo';
 import { AccountTypeSelector } from '@/components/AccountTypeSelector';
+import { AppleIcon, GoogleIcon } from '@/components/SocialSignIn';
 import { verifyPreviewSignup, type PreviewChallenge } from '@/lib/preview-session';
 import { AppBrand } from '@/components/AppBrand';
 
@@ -22,6 +24,9 @@ function Register() {
   const [challenge, setChallenge] = useState<PreviewChallenge | null>(null);
   const [verified, setVerified] = useState(false);
   const [success, setSuccess] = useState(false);
+  function prototypeSocial() {
+    toast.info('Prototype only — social sign-up is not connected and no account is created.');
+  }
   function changed() {setChallenge(null);setVerified(false);setCode('');setError('');}
   function send(channel: 'email' | 'phone') {
     const contact = (channel === 'email' ? email : phone).trim();
@@ -48,6 +53,14 @@ function Register() {
       {accountType === 'individual' && <><Field label="Date of birth"><Input name="dob" type="date"/></Field><Field label="Gender"><select name="gender" className="h-10 w-full rounded-md border bg-card px-3"><option value="">Not specified</option><option>Male</option><option>Female</option></select></Field></>}
       {error && <p role="alert" className="text-sm text-destructive sm:col-span-2">{error}</p>}
       <Button type="submit" disabled={!hydrated} className="sm:col-span-2">Create Account</Button>
+      <div className="sm:col-span-2 grid gap-2">
+        <div className="relative text-center text-xs text-muted-foreground"><span className="relative z-10 bg-background px-2">or continue with</span><span className="absolute inset-x-0 top-1/2 border-t" /></div>
+        <div className="grid grid-cols-2 gap-2">
+          <Button type="button" variant="outline" className="h-11 gap-2 bg-card" aria-label="Sign up with Google" onClick={prototypeSocial}><GoogleIcon />Continue with Google</Button>
+          <Button type="button" variant="outline" className="h-11 gap-2 bg-card" aria-label="Sign up with Apple" onClick={prototypeSocial}><AppleIcon />Continue with Apple</Button>
+        </div>
+        <p role="status" className="text-xs text-muted-foreground">Social sign-up buttons are visual only in this prototype — no provider connection, no account created.</p>
+      </div>
       <p className="text-sm text-muted-foreground sm:col-span-2">Already have an account? <Link to="/" className="text-primary">Sign in</Link></p>
     </form>}
   </div></div>;

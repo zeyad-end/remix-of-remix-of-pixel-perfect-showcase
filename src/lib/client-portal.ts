@@ -1,3 +1,4 @@
+import { prototypeStorage } from './prototype-storage';
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCloud } from "@/components/CloudProvider";
@@ -24,7 +25,7 @@ export type ClientLink = { gymId: string; favorite: boolean };
 const key = (id: string) => `ironhaus-client-links:${id}`;
 export function readClientLinks(id: string): ClientLink[] {
   try {
-    return JSON.parse(localStorage.getItem(key(id)) ?? "[]");
+    return JSON.parse(prototypeStorage().getItem(key(id)) ?? "[]");
   } catch {
     return [];
   }
@@ -44,7 +45,7 @@ export function updateClientLink(
             r.gymId === gymId && action === "favorite" ? { ...r, favorite: !r.favorite } : r,
           )
         : [...rows, { gymId, favorite: false }];
-  localStorage.setItem(key(id), JSON.stringify(next));
+  prototypeStorage().setItem(key(id), JSON.stringify(next));
   return next;
 }
 export function demoDirectory(): ClientGym[] {

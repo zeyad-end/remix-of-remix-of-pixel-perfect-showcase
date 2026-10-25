@@ -1,3 +1,4 @@
+import { prototypeStorage } from './prototype-storage';
 import { generateId } from './utils';
 import { isGyvoraId } from './gyvora-id';
 
@@ -5,10 +6,10 @@ const storageKey = 'gyvora-demo-permanent-identities-v1';
 type Entry = { kind: 'G' | 'C'; localId: string; key: string; id?: string; version?: number; aliases?: string[] };
 type Registry = { installation: string; entries: Entry[] };
 function read(): Registry {
-  const raw = localStorage.getItem(storageKey);
+  const raw = prototypeStorage().getItem(storageKey);
   if (raw) return JSON.parse(raw) as Registry;
   const registry = { installation: generateId(), entries: [] };
-  localStorage.setItem(storageKey, JSON.stringify(registry));
+  prototypeStorage().setItem(storageKey, JSON.stringify(registry));
   return registry;
 }
 export function ensureDemoIdentity(kind: Entry['kind'], localId: string): string | undefined {
@@ -16,7 +17,7 @@ export function ensureDemoIdentity(kind: Entry['kind'], localId: string): string
   const found = registry.entries.find(e => e.kind === kind && e.localId === localId);
   if (found) return found.id;
   registry.entries.push({ kind, localId, key: generateId() });
-  localStorage.setItem(storageKey, JSON.stringify(registry));
+  prototypeStorage().setItem(storageKey, JSON.stringify(registry));
   return undefined;
 }
 export function demoIdentity(kind: Entry['kind'], localId: string): string | undefined {
@@ -42,6 +43,6 @@ export async function syncDemoIdentities(reserve: (input: { data: { installation
       entry.id = row.id;
       entry.version = 2;
     }
-    localStorage.setItem(storageKey, JSON.stringify(current));
+    prototypeStorage().setItem(storageKey, JSON.stringify(current));
   }
 }

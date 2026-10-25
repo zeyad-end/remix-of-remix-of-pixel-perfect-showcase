@@ -57,7 +57,6 @@ export function PrototypeSubscriptionRequest() {
       <section className="overflow-hidden rounded-2xl border bg-card" aria-label="Gym subscription request">
         <header className="flex items-center justify-between gap-3 border-b px-5 py-3">
           <div className="flex min-w-0 items-center gap-2"><img src={logo.url} alt="GYVORA logo" width={28} height={28} className="h-7 w-7 shrink-0 rounded-lg object-contain" /><p className="min-w-0 break-words text-sm"><strong>GYVORA</strong><span className="text-muted-foreground"> · Gym Account</span></p></div>
-          <span className="shrink-0 rounded-full border px-2.5 py-1 text-[11px] text-muted-foreground">Demo access</span>
         </header>
         <div className="mx-auto max-w-[616px] px-5 py-7 sm:px-0">
           {step === 0 ? <form onSubmit={e => { e.preventDefault(); void send(); }} noValidate>
@@ -80,10 +79,10 @@ export function PrototypeSubscriptionRequest() {
             <p role="status" className="mt-2 text-sm leading-relaxed text-muted-foreground">Your request has been sent and is waiting for administrator approval.</p>
             <p className="mt-3 break-words text-xs text-muted-foreground">{request?.gymName} · {plans.find(p => p.value === request?.plan)?.label}</p>
             <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row"><Button variant="secondary" disabled={busy} className="h-10" onClick={() => setStep(2)}>Done</Button><Button disabled={busy} className="h-auto min-h-10 whitespace-normal py-2" onClick={() => void skip()}>Skip — Enter Demo Dashboard</Button></div>
-            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Skip grants prototype demo access only. It does not approve or mark the subscription as paid. The request remains Pending.</p>
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">Skip grants temporary prototype access only. It does not approve or mark the subscription as paid. The request remains Pending.</p>
           </div> : <div>
             <h1 className="text-xl font-semibold tracking-normal">Subscription approval pending</h1><p role="status" className="mt-1 text-sm text-muted-foreground">Your subscription request has been saved.</p>
-            <div className="mt-6 rounded-xl border bg-surface p-4"><h2 className="text-sm font-semibold tracking-normal">Request status</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">An administrator will review your gym request. Dashboard access remains unavailable until approval unless you choose Skip for prototype demo access.</p><span className="mt-2 inline-block rounded-full bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary">Pending · Awaiting approval</span><p className="mt-3 break-words text-xs text-muted-foreground">{request?.gymName} · {plans.find(p => p.value === request?.plan)?.label} · {request?.requestDate}</p></div>
+            <div className="mt-6 rounded-xl border bg-surface p-4"><h2 className="text-sm font-semibold tracking-normal">Request status</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">An administrator will review your gym request. Dashboard access remains unavailable until approval unless the temporary prototype access from Skip is active.</p><span className="mt-2 inline-block rounded-full bg-primary/20 px-2.5 py-1 text-xs font-semibold text-primary">Pending · Awaiting approval</span><p className="mt-3 break-words text-xs text-muted-foreground">{request?.gymName} · {plans.find(p => p.value === request?.plan)?.label} · {request?.requestDate}</p></div>
             <div className="mt-5 flex justify-end"><Button variant="secondary" className="h-auto min-h-10 whitespace-normal py-2" onClick={() => { setStep(0); setError(''); }}>Back to subscription options</Button></div>
           </div>}
           {step !== 0 && error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}

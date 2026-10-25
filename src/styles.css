@@ -123,3 +123,9 @@
   color: var(--muted-foreground);
   font-weight: 600;
 }
+
+.subscription-wizard {
+  --primary: oklch(0.74 0.18 52);
+  --primary-foreground: oklch(0.16 0 0);
+  --ring: oklch(0.74 0.18 52 / 60%);
+}

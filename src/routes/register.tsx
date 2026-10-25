@@ -76,7 +76,7 @@ function Register() {
       <Field label="Password" className="sm:col-span-2"><Input name="password" type="password" required minLength={8} maxLength={128} autoComplete="off"/></Field>
       {accountType === 'individual' && <><Field label="Date of birth"><Input name="dob" type="date"/></Field><Field label="Gender"><select name="gender" className="h-10 w-full rounded-md border bg-card px-3"><option value="">Not specified</option><option>Male</option><option>Female</option></select></Field></>}
       {error && <p role="alert" className="text-sm text-destructive sm:col-span-2">{error}</p>}
-      <Button type="submit" disabled={!hydrated} className="sm:col-span-2">Create Account</Button>
+      <Button type="submit" disabled={!hydrated || busy} className="sm:col-span-2">{busy ? 'Creating account…' : 'Create Account'}</Button>
       <div className="sm:col-span-2 grid gap-2">
         <div className="relative text-center text-xs text-muted-foreground"><span className="relative z-10 bg-background px-2">or continue with</span><span className="absolute inset-x-0 top-1/2 border-t" /></div>
         <div className="grid grid-cols-2 gap-2">

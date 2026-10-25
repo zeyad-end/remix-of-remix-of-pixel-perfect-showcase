@@ -243,11 +243,6 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       setPermissions([]); setVerified(true); setIsAdmin(false); setLoading(false);
       return;
     }
-    if (import.meta.env.DEV) {
-      generation.current++; bindPersistence(undefined);
-      setProfile(null); setGyms([]); setGymId(''); setRole(''); setPermissions([]); setVerified(false); setIsAdmin(false); setLoading(false);
-      return;
-    }
     try {
       const {
         data: { user },

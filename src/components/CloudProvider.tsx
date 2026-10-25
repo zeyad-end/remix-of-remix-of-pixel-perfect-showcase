@@ -256,9 +256,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
           .eq("role", "super_admin")
           .maybeSingle();
         setIsAdmin(!!admin);
-        if (admin) setRole("super_admin");
+        setRole(admin ? "super_admin" : p.account_type === "owner" ? "Owner" : "Client");
       }
     } catch (e) {
+      generation.current++; bindPersistence(undefined); setProfile(null); setGyms([]); setGymId(""); setRole(""); setPermissions([]); setIsAdmin(false); setVerified(false);
       toast.error(e instanceof Error ? e.message : "Could not load your account");
     } finally {
       setLoading(false);

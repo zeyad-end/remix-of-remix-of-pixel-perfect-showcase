@@ -5,6 +5,7 @@ import { Check, MessageCircle } from 'lucide-react';
 import { useCloud } from '@/components/CloudProvider';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { subscriptionEntryStep, type SubscriptionStep } from '@/lib/subscription-steps';
 import { requestSubscription } from '@/lib/cloud.functions';
 import { getOwnerGate, startOwnerTrial } from '@/lib/owner-gate.functions';
 import { trialActive, trialExpired, type OwnerGate } from '@/lib/trial';
@@ -24,7 +25,7 @@ const plans = [
   { value: 'Annual Plan', label: 'Annual Subscription', detail: 'Subscription renewed every year' },
 ] as const;
 type SavedRequest = Database['public']['Tables']['owner_requests']['Row'];
-type Step = 'selection' | 'sent' | 'status';
+type Step = SubscriptionStep;
 
 function Request() {
   const c = useCloud();
@@ -52,7 +53,7 @@ function Request() {
       if (!alive) return;
       if(readError) { setError('Could not load your saved request. Please reload.'); return; }
       setRequest(data);
-      if(initial) {setName(data?.gym_name ?? '');setPhone(data?.phone || c.profile?.phone || '');setPlan(data?.plan ?? '');go(data?'status':'selection');setLoaded(true);}
+      if(initial) {setName(data?.gym_name ?? '');setPhone(data?.phone || c.profile?.phone || '');setPlan(data?.plan ?? '');go(subscriptionEntryStep(data));setLoaded(true);}
       try {const next=await fetchGate({});if(alive)setGate(next);} catch {if(alive)setError('Could not verify saved gym access. Please reload.');}
     }
     void load(true);

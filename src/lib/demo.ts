@@ -339,7 +339,8 @@ export function lookupDemoClient(gymId:string,value:string) {
     if(!sample)throw new Error('No sample client account found on this browser. Sign in as a Client first.');
     return {...sample,member_id:SAMPLE_CLIENT_ID,gyvora_id:SAMPLE_CLIENT_ID};
   }
-  const matches=localClients().filter(p=>p.id.toLowerCase()===input||demoIdentityMatches('C',p.id,input)||legacy[p.id]?.toLowerCase()===input||(p.email&&p.email.toLowerCase()===input)||p.full_name.toLowerCase()===input);
+  const digits=input.replace(/\D/g,'');
+  const matches=localClients().filter(p=>p.id.toLowerCase()===input||demoIdentityMatches('C',p.id,input)||legacy[p.id]?.toLowerCase()===input||(p.email&&p.email.toLowerCase()===input)||p.full_name.toLowerCase()===input||(digits.length>=6&&p.phone.replace(/\D/g,'')===digits));
   if(matches.length>1)throw new Error('More than one account has this name. Use the intended GYVORA ID or email.');
   const p=matches[0];
   if(!p)throw new Error('No existing Local demo client found on this browser. Saved accounts require your signed-in gym owner session.');

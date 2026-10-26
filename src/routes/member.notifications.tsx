@@ -48,6 +48,7 @@ function Notifications() {
   const demo = getDemoSession();
   const rows = demo ? pendingDemoInvitations(c.profile?.email ?? "", all) : cloudRows;
   const fetchMessages = useServerFn(listAccountMessages);
+  const [messageError, setMessageError] = useState(false);
   const demoMessages = useDemoStore((s) => s.adminMessages);
   const [cloudMessages, setCloudMessages] = useState<{ id: string; body: string; created_at: string }[]>([]);
   const messages = demo
@@ -58,7 +59,7 @@ function Notifications() {
     let cancelled = false;
     fetchMessages()
       .then((data) => { if (!cancelled) setCloudMessages(data); })
-      .catch(() => { if (!cancelled) setCloudMessages([]); });
+      .catch(() => { if (!cancelled) { setCloudMessages([]); setMessageError(true); } });
     return () => { cancelled = true; };
   }, [c.profile?.id, demo]);
   async function load() {
@@ -73,6 +74,7 @@ function Notifications() {
   }, [c.profile?.id]);
   return (
     <ClientShell title="Notifications">
+      {messageError && <p role="alert" className="text-sm text-destructive">Could not load admin messages. Please refresh.</p>}
       {messages.length > 0 && (
         <section className="border-b pb-5">
           <h2 className="text-lg font-semibold">Messages from GYVORA Administration</h2>

@@ -10,8 +10,13 @@ import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { sendAccountMessage } from '@/lib/account-messages.functions';
 import { MessageSquare } from 'lucide-react';
+import { gymPrices } from '@/lib/platform-subscriptions';
+import { egp } from '@/lib/mock';
+import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth } from '@/lib/approved-gym-columns';
 
 type AdminGym = Awaited<ReturnType<typeof listAdminGyms>>[number];
+
+const deletedHead = ['#','Gym Name','Owner','Contact','Deletion date','Notes / Reason','Actions'];
 
 export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
   const list = useServerFn(listAdminGyms);
@@ -80,29 +85,36 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
     <div>
       <PageHeader title={deleted ? "Deleted Gyms" : "Approved Gyms"} subtitle={`Total ${deleted ? "deleted" : "approved"} gyms: ${visibleRows.length}`} />
       {error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
-      {!loaded ? <TableSkeleton cols={7} /> : <><DataTable head={deleted ? ['#','Gym Name','Owner','Contact','Deletion date','Notes / Reason','Actions'] : ['#', 'Gym Name', 'Actions', 'Owner', 'Contact', 'Plan', 'Status', 'Freeze note']}>
-        {visibleRows.map((g, i) => (
+      {!loaded ? <TableSkeleton cols={deleted ? 7 : 8} /> : <><DataTable head={deleted ? deletedHead : approvedGymColumns} widths={deleted ? undefined : approvedGymColumnWidths} minWidth={deleted ? 640 : approvedGymTableMinWidth}>
+        {visibleRows.map((g, i) => {
+          const prices = gymPrices({ plan: g.plan });
+          return (
           <tr key={g.id}>
-            <td className={td}>{i + 1}</td>
-            <td className={td}>{g.name}</td>
-            {!deleted && <td className={`${td} min-w-[260px]`}><div className="flex flex-nowrap gap-2">
-              <Button size="sm" variant="outline" disabled={busy} onClick={()=>{setEditing(g);setGymName(g.name);}}>Edit</Button>
-              {g.frozen ? <Button size="sm" variant="secondary" disabled={busy} onClick={()=>void unfreeze(g)}>Unfreeze</Button> : <Button size="sm" variant="secondary" disabled={busy} onClick={()=>{setFreezing(g);setNote('');}}>Freeze</Button>}
-              <Button size="sm" variant="destructive" disabled={busy} onClick={()=>{setDeleting(g);setDeletionNote('');}}>Delete</Button>
-              <Button size="icon" variant="ghost" aria-label={`Message ${g.name} owner`} disabled={busy} onClick={()=>{setMessaging(g);setMessageBody('');}}><MessageSquare className="h-4 w-4"/></Button>
-            </div></td>}
-            <td className={td}>{g.ownerName || '—'}<span className="block text-xs text-muted-foreground">Email: {g.ownerEmail || 'Not provided'}</span></td><td className={td}>{g.ownerPhone || 'Not provided'}</td>
             {deleted ? <>
+              <td className={td}>{i + 1}</td>
+              <td className={td}>{g.name}</td>
+              <td className={td}>{g.ownerName || '—'}<span className="block text-xs text-muted-foreground">Email: {g.ownerEmail || 'Not provided'}</span></td><td className={td}>{g.ownerPhone || 'Not provided'}</td>
               <td className={td}>{g.deletedAt ? new Date(g.deletedAt).toLocaleString() : '—'}</td>
               <td className={`${td} max-w-sm whitespace-pre-wrap break-words`}>{g.deletionNote || '—'}</td>
               <td className={td}><Button size="sm" variant="outline" disabled={busy} onClick={()=>setRestoring(g)}>Edit / Restore</Button></td>
             </> : <>
-              <td className={td}>{g.plan || '—'}</td>
-              <td className={td}><span className={g.frozen ? 'text-destructive' : 'text-success'}>{g.frozen ? 'Frozen' : 'Active'}</span></td>
-              <td className={td}>{g.frozen && g.freezeNote ? g.freezeNote : '—'}</td>
+              <td className={`${td} min-w-[15rem]`}>{g.name}</td>
+              <td className={`${td} max-w-[18rem] break-words`}>{g.ownerEmail || 'Not provided'}</td>
+              <td className={`${td} whitespace-nowrap`}>{g.ownerPhone || 'Not provided'}</td>
+              <td className={`${td} whitespace-nowrap`}>{g.plan || '—'}</td>
+              <td className={`${td} whitespace-nowrap tabular-nums`}>{prices.monthlyPrice > 0 ? egp(prices.monthlyPrice) : '—'}</td>
+              <td className={`${td} whitespace-nowrap tabular-nums`}>{prices.annualPrice > 0 ? egp(prices.annualPrice) : '—'}</td>
+              <td className={`${td} whitespace-nowrap`}><span className={g.frozen ? 'text-destructive' : 'text-success'}>{g.frozen ? 'Frozen' : 'Active'}</span></td>
+              <td className={`${td} min-w-[19rem]`}><div className="flex flex-nowrap gap-2">
+                <Button size="sm" variant="outline" disabled={busy} onClick={()=>{setEditing(g);setGymName(g.name);}}>Edit</Button>
+                {g.frozen ? <Button size="sm" variant="secondary" disabled={busy} onClick={()=>void unfreeze(g)}>Unfreeze</Button> : <Button size="sm" variant="secondary" disabled={busy} onClick={()=>{setFreezing(g);setNote('');}}>Freeze</Button>}
+                <Button size="sm" variant="destructive" disabled={busy} onClick={()=>{setDeleting(g);setDeletionNote('');}}>Delete</Button>
+                <Button size="icon" variant="ghost" aria-label={`Message ${g.name} owner`} disabled={busy} onClick={()=>{setMessaging(g);setMessageBody('');}}><MessageSquare className="h-4 w-4"/></Button>
+              </div></td>
             </>}
           </tr>
-        ))}
+          );
+        })}
       </DataTable></>}
       {!visibleRows.length && <p className="py-6 text-muted-foreground">{deleted ? "No deleted gyms." : "No approved gyms yet. Approve a request to add one."}</p>}
       <Dialog open={!!editing} onOpenChange={open=>{if(!open)setEditing(null);}}><DialogContent><DialogHeader><DialogTitle>Edit gym</DialogTitle></DialogHeader><form className="space-y-4" onSubmit={async e=>{e.preventDefault();if(!editing)return;setBusy(true);try{await saveGym({data:{gymId:editing.id,name:gymName}});setEditing(null);await load();toast.success('Gym details saved.');}catch(e){setError(e instanceof Error?e.message:'Could not save gym.');}finally{setBusy(false);}}}><Field label="Gym name"><Input required maxLength={100} value={gymName} onChange={e=>setGymName(e.target.value)}/></Field><DialogFooter><Button type="button" variant="outline" onClick={()=>setEditing(null)}>Cancel</Button><Button disabled={busy}>Save</Button></DialogFooter></form></DialogContent></Dialog>

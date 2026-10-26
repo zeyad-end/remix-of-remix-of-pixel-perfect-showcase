@@ -107,6 +107,7 @@ export type Gym = typeof gymSeed & {
   logo: string;
   cover: string;
   gallery: GalleryItem[];
+  coords?: { lat: number; lng: number };
   hoursByDay: DayHours[];
   preferences?: GymPreferences;
 };

@@ -112,12 +112,14 @@ export function QRScanner({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <video
-          ref={video}
-          className="aspect-video w-full rounded-md bg-secondary"
-          muted
-          playsInline
-        />
+        <div className="qr-scan-frame relative overflow-hidden rounded-md">
+          <video
+            ref={video}
+            className="aspect-video w-full rounded-md bg-secondary"
+            muted
+            playsInline
+          />
+        </div>
         <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
           {busy ? (
             <LoaderCircle className="h-4 w-4 animate-spin" />

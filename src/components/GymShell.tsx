@@ -93,7 +93,7 @@ export function GymShell({ children }: { children: ReactNode }) {
             <span className="hidden min-w-0 text-left text-xs sm:block"><span className="block truncate font-semibold">{c.profile?.full_name}</span><span className="block text-muted-foreground">{c.role}</span></span>
           </Button>
         </header>
-        <main key={currencyOf(gym)} className="mx-auto max-w-7xl px-4 py-8 sm:px-8">{canView(c.role,c.permissions,routeAreas['/'+(path.split('/')[1]??'')]??'')?children:<p role="alert">You do not have permission to open this gym page.</p>}</main>
+        <main key={currencyOf(gym)} className="mx-auto max-w-7xl px-4 py-8 sm:px-8">{canView(c.role,c.permissions,routeAreas['/'+(path.split('/')[1]??'')]??'')?<div key={path} className="page-enter">{children}</div>:<p role="alert">You do not have permission to open this gym page.</p>}</main>
       </div>
     </div>
   );

@@ -72,7 +72,7 @@ function SuperAdminContent() {
           );
         })}
       </nav>
-      <Outlet />
+      <div key={path} className="page-enter"><Outlet /></div>
       <PlatformAccount open={accountOpen} onOpenChange={setAccountOpen}/>
       <PlatformSettings open={settingsOpen} onOpenChange={setSettingsOpen}/>
     </div>

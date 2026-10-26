@@ -11,7 +11,7 @@ import { getState, saveState } from "@/lib/store";
 const LeafletMap = lazy(() => import("./LeafletMap"));
 const MapSkeleton = ({ className = "h-72 w-full" }: { className?: string }) => <div className={`${className} animate-pulse rounded-lg bg-secondary`} aria-label="Loading map" />;
 
-export function MapView({ point, className }: { point: GeoPoint; className?: string }) {
+export function MapView({ point, className = "h-40 w-full" }: { point: GeoPoint; className?: string }) {
   const [err, setErr] = useState("");
   if (err) return <p role="alert" className="text-xs text-destructive">{err}</p>;
   return <ClientOnly fallback={<MapSkeleton className={className} />}><Suspense fallback={<MapSkeleton className={className} />}><LeafletMap point={point} onError={setErr} className={className} /></Suspense></ClientOnly>;

@@ -12,7 +12,7 @@ import { MessageSquare } from 'lucide-react';
 import { PlatformGymEdit } from '@/components/PlatformGymEdit';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth } from '@/lib/approved-gym-columns';
+import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth, approvedGymTotals } from '@/lib/approved-gym-columns';
 
 export const Route = createFileRoute('/super-admin/gyms')({
    head: () => seo('Approved gyms', 'Manage approved gyms, freeze access or move gyms to reversible deletion.'),
@@ -33,14 +33,22 @@ function DemoGyms() {
   const [messaging,setMessaging]=useState<ApprovedGym|null>(null);
   const [messageBody,setMessageBody]=useState('');
 
+  const totals = approvedGymTotals(gyms);
+
   return (
     <div>
-      <PageHeader title="Approved Gyms" subtitle={`Total approved gyms: ${gyms.length} · fictional demo data.`} />
+      <PageHeader title="Approved Gyms" subtitle="Fictional demo data." />
+      <div className="panel mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 px-4 py-3 text-sm">
+        <span className="font-semibold">Total approved gyms: {gyms.length}</span>
+        <span className="text-muted-foreground">Total monthly price: <span className="font-semibold tabular-nums text-foreground">{egp(totals.monthlyPrice)}</span></span>
+        <span className="text-muted-foreground">Total annual price: <span className="font-semibold tabular-nums text-foreground">{egp(totals.annualPrice)}</span></span>
+      </div>
       <DataTable head={approvedGymColumns} widths={approvedGymColumnWidths} minWidth={approvedGymTableMinWidth}>
-        {gyms.map((g) => {
+        {gyms.map((g, i) => {
           const prices = gymPrices(g);
           return (
           <tr key={g.id}>
+            <td className={`${td} tabular-nums`}>{i + 1}</td>
             <td className={`${td} min-w-[15rem]`}>{g.name}</td>
             <td className={`${td} max-w-[18rem] break-words`}>{g.email.startsWith('fictional-') ? 'Fictional owner' : g.email}</td>
             <td className={`${td} whitespace-nowrap`}>{g.phone || 'Not provided'}</td>

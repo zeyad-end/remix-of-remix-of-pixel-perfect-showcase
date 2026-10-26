@@ -4,7 +4,7 @@ import { listAdminGyms, setGymFrozen, changeGymDeletion, editAdminGym } from '@/
 import { Input } from './ui/input';
 import { Field } from './kit';
 import { Button } from './ui/button';
-import { DataTable, PageHeader, td } from './kit';
+import { DataTable, PageHeader, TableSkeleton, td } from './kit';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
   const [gymName,setGymName]=useState('');
   const [rows, setRows] = useState<AdminGym[]>([]);
   const [error, setError] = useState('');
+  const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [freezing, setFreezing] = useState<AdminGym | null>(null);
   const [note, setNote] = useState('');
@@ -35,6 +36,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
   async function load() {
     try { setRows(await list({})); setError(''); }
     catch (e) { setError(e instanceof Error ? e.message : 'Could not load gyms. Please reload.'); }
+    finally { setLoaded(true); }
   }
   useEffect(() => { void load(); }, []);
 
@@ -78,7 +80,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
     <div>
       <PageHeader title={deleted ? "Deleted Gyms" : "Approved Gyms"} subtitle={`Total ${deleted ? "deleted" : "approved"} gyms: ${visibleRows.length}`} />
       {error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
-      <DataTable head={deleted ? ['#','Gym Name','Owner','Deletion date','Notes / Reason','Actions'] : ['#', 'Gym Name', 'Actions', 'Owner', 'Plan', 'Status', 'Freeze note']}>
+      {!loaded ? <TableSkeleton cols={6} /> : <><DataTable head={deleted ? ['#','Gym Name','Owner','Deletion date','Notes / Reason','Actions'] : ['#', 'Gym Name', 'Actions', 'Owner', 'Plan', 'Status', 'Freeze note']}>
         {visibleRows.map((g, i) => (
           <tr key={g.id}>
             <td className={td}>{i + 1}</td>
@@ -101,7 +103,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
             </>}
           </tr>
         ))}
-      </DataTable>
+      </DataTable></>}
       {!visibleRows.length && <p className="py-6 text-muted-foreground">{deleted ? "No deleted gyms." : "No approved gyms yet. Approve a request to add one."}</p>}
       <Dialog open={!!editing} onOpenChange={open=>{if(!open)setEditing(null);}}><DialogContent><DialogHeader><DialogTitle>Edit gym</DialogTitle></DialogHeader><form className="space-y-4" onSubmit={async e=>{e.preventDefault();if(!editing)return;setBusy(true);try{await saveGym({data:{gymId:editing.id,name:gymName}});setEditing(null);await load();toast.success('Gym details saved.');}catch(e){setError(e instanceof Error?e.message:'Could not save gym.');}finally{setBusy(false);}}}><Field label="Gym name"><Input required maxLength={100} value={gymName} onChange={e=>setGymName(e.target.value)}/></Field><DialogFooter><Button type="button" variant="outline" onClick={()=>setEditing(null)}>Cancel</Button><Button disabled={busy}>Save</Button></DialogFooter></form></DialogContent></Dialog>
 

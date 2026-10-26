@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { CheckCheck, Plus, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
@@ -47,6 +47,7 @@ export function ProgramEditor({
   trainers?: Trainer[];
 }) {
   const [name, setName] = useState("");
+  const [savedFlash, setSavedFlash] = useState(false);
   const [trainer, setTrainer] = useState("");
   const [notes, setNotes] = useState("");
   const [rows, setRows] = useState<Workout["exercises"]>([empty()]);
@@ -85,7 +86,8 @@ export function ProgramEditor({
                 exercises: rows,
               });
               await onSave(p);
-              onClose();
+              setSavedFlash(true);
+              window.setTimeout(() => { setSavedFlash(false); onClose(); }, 700);
             } catch (e) {
               toast.error(e instanceof Error ? e.message : "Could not save program");
             } finally {
@@ -219,7 +221,7 @@ export function ProgramEditor({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button disabled={busy || uploading}>{busy ? "Saving…" : "Save"}</Button>
+            <Button disabled={busy || uploading || savedFlash} className={savedFlash ? "saved-flash" : undefined}>{savedFlash ? <><CheckCheck className="h-4 w-4" />Saved</> : busy ? "Saving…" : "Save"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

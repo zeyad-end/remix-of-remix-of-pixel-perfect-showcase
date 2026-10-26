@@ -130,7 +130,7 @@ function MemberHome() {
                   size="sm"
                   onClick={() => {
                     if (window.confirm(`Leave ${g.name}? You can rejoin later if the gym adds or approves you again.`))
-                      void p.change(g.id, "leave").catch((e) => toast.error(e instanceof Error ? e.message : String(e)));
+                      void p.change(g.id, "leave").then(() => toast.success(`You left ${g.name}`)).catch((e) => toast.error(e instanceof Error ? e.message : String(e)));
                   }}
                 >
                   Leave Gym

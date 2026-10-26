@@ -13,12 +13,15 @@ import { generateId } from "@/lib/utils";
 import { MonthDurationInput } from './MonthDurationInput';
 import { monthLabel, planMonths } from '@/lib/membership-dates';
 import { planSchema } from '@/lib/validation';
+import { uploadImage } from '@/lib/images';
+import { GalleryImage } from './GymGallery';
 
 export function EditGymDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const [g, setG] = useState<Gym>(getState().gym);
   const [plans, setPlans] = useState<Plan[]>(getState().plans);
   const [svc, setSvc] = useState("");
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   useEffect(() => { if (open) { setG(getState().gym); setPlans(getState().plans); } }, [open]);
   const up = (p: Partial<Gym>) => setG((x) => ({ ...x, ...p }));
 
@@ -66,10 +69,21 @@ export function EditGymDialog({ open, onOpenChange }: { open: boolean; onOpenCha
           <Button size="sm" variant="secondary" onClick={() => setPlans([...plans, { id: generateId(), name: "New plan", duration: "1 month", durationMonths: 1, price: 0, features: [] }])}><Plus className="h-4 w-4" />Add plan</Button>
         </div>
 
-        <Field label="Gallery images">
-          <Input type="file" accept="image/*" multiple onChange={async (e) => { const fs = Array.from(e.target.files ?? []); const urls = await Promise.all(fs.map(readFile)); up({ gallery: [...g.gallery, ...urls] }); }} />
+        <Field label={uploading ? "Gallery images — uploading…" : "Gallery images"}>
+          <Input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={uploading} onChange={async (e) => {
+            const input = e.currentTarget; const fs = Array.from(input.files ?? []); if (!fs.length) return;
+            setUploading(true);
+            try {
+              const paths = await Promise.all(fs.map(uploadImage));
+              const next = [...getState().gym.gallery, ...paths];
+              await saveState(() => ({ gym: { ...getState().gym, gallery: next } }));
+              up({ gallery: next });
+              toast.success(paths.length === 1 ? "Photo added to gallery" : `${paths.length} photos added to gallery`);
+            } catch (err) { toast.error(err instanceof Error ? `Upload failed: ${err.message}` : "Upload failed — photo was not saved"); }
+            finally { setUploading(false); input.value = ""; }
+          }} />
         </Field>
-        {g.gallery.length > 0 && <div className="flex flex-wrap gap-2">{g.gallery.map((src, i) => <div key={i} className="relative"><img src={src} alt="" className="h-16 w-20 rounded-md object-cover" /><button aria-label="Remove image" className="absolute -right-1 -top-1 rounded-full bg-card p-0.5" onClick={() => up({ gallery: g.gallery.filter((_, j) => j !== i) })}><X className="h-3 w-3" /></button></div>)}</div>}
+        {g.gallery.length > 0 && <div className="flex flex-wrap gap-2">{g.gallery.map((src, i) => <div key={src + i} className="relative"><GalleryImage path={src} className="h-16 w-20 rounded-md object-cover" /><button aria-label="Remove image" className="absolute -right-1 -top-1 rounded-full bg-card p-0.5" onClick={() => up({ gallery: g.gallery.filter((_, j) => j !== i) })}><X className="h-3 w-3" /></button></div>)}</div>}
 
         <DialogFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>Cancel</Button>

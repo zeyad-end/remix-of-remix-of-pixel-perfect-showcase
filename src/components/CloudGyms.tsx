@@ -84,7 +84,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
 
   return (
     <div>
-      <PageHeader title={deleted ? "Deleted Gyms" : "Approved Gyms"} subtitle={deleted ? `Total deleted gyms: ${visibleRows.length}` : undefined} />
+      <PageHeader title={deleted ? "Deleted Gyms" : "Approved Gyms"} subtitle={deleted ? `Total deleted gyms: ${visibleRows.length}` : ''} />
       {!deleted && loaded && <div className="panel mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 px-4 py-3 text-sm">
         <span className="font-semibold">Total approved gyms: {visibleRows.length}</span>
         <span className="text-muted-foreground">Total monthly price: <span className="font-semibold tabular-nums text-foreground">{egp(totals.monthlyPrice)}</span></span>

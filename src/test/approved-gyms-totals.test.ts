@@ -7,9 +7,10 @@ describe('Approved Gyms numbering and price totals', () => {
   });
 
   it('sums monthly and annual prices across listed gyms, treating missing prices as zero', () => {
+    // Legacy catalog: Basic 800 over 1 month, Premium 2100 over 3 months.
     const totals = approvedGymTotals([{ plan: 'Basic' }, { plan: 'Premium' }, {}]);
-    expect(totals.monthlyPrice).toBeCloseTo(800 + 2100);
-    expect(totals.annualPrice).toBeCloseTo(9600 + 25200);
+    expect(totals.monthlyPrice).toBeCloseTo(800 + 700);
+    expect(totals.annualPrice).toBeCloseTo(9600 + 8400);
   });
 
   it('returns zero totals when no gyms are listed', () => {

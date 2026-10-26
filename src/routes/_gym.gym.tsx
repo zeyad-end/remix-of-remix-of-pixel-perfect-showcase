@@ -15,6 +15,7 @@ import { canChange } from '@/lib/gym-permissions';
 import { readPreviewSession } from '@/lib/preview-session';
 import { SampleAccountQR } from '@/components/SampleAccountQR';
 import { GymGalleryManager } from '@/components/GymGallery';
+import { LocationPickerDialog, LocationSummary } from '@/components/GymLocation';
 
 export const Route = createFileRoute("/_gym/gym")({
   head: () => seo("Gym profile", "Manage your gym's public profile, plans, trainers and gallery."),
@@ -28,10 +29,12 @@ function GymProfile() {
   const trainers = useStore((s) => s.trainers);
   const [edit, setEdit] = useState(false);
   const [share, setShare] = useState(false);
+  const [picking, setPicking] = useState(false);
   const heroCover = gym.cover || cover;
   return (
     <div className="space-y-6">
       <EditGymDialog open={edit} onOpenChange={setEdit} />
+      <LocationPickerDialog open={picking} onOpenChange={setPicking} />
       <ShareGymDialog open={share} onOpenChange={setShare} code={gym.code} gyvoraId={c.gyms.find(g=>g.id===c.gymId)?.gyvora_id} />
       <div className="panel relative overflow-hidden">
         <img src={heroCover} alt="Gym interior" className="h-64 w-full object-cover sm:h-80" width={1600} height={640} />
@@ -109,9 +112,8 @@ function GymProfile() {
       <div className="grid gap-6 lg:grid-cols-3">
         <GymGalleryManager editable={canChange(c.role,c.permissions,'Profile','edit')} />
         <div className="space-y-6">
-          <Panel title="Location">
-            <div className="grid h-32 place-items-center rounded-lg bg-secondary text-xs text-muted-foreground"><MapPin className="h-6 w-6 text-primary" /></div>
-            <p className="mt-3 text-sm text-muted-foreground">{gym.location}</p>
+          <Panel title="Location" action={canChange(c.role,c.permissions,'Profile','edit') ? <Button size="sm" variant="secondary" onClick={() => setPicking(true)}><MapPin className="h-4 w-4" />Set on map</Button> : undefined}>
+            <LocationSummary address={gym.location} coords={gym.coords} />
           </Panel>
           <Panel title="Contact">
             <div className="space-y-2 text-sm">

@@ -29,6 +29,7 @@ import {
   createDemoInvitation,
   changeDemoInvitation,
   changeDemoStaff,
+  lookupDemoClient,
   type DemoInvitation,
 } from "@/lib/demo";
 export const Route = createFileRoute("/_gym/staff")({
@@ -42,9 +43,25 @@ function Staff() {
   const invite = useServerFn(manageInvitation);
   const lookup = useServerFn(lookupClient);
   const [query,setQuery]=useState('');
-  const [person,setPerson]=useState<{id:string;full_name:string;email:string;phone:string}|null>(null);
+  type Found={id:string;full_name:string;email:string;phone:string};
+  const [person,setPerson]=useState<Found|null>(null);
   const [scan,setScan]=useState(false);
-  async function find(value:string, fromCamera=false){setPerson(null);try{setPerson(await lookup({data:{gymId:c.gymId,memberId:value.trim()}}));return true;}catch(e){if(fromCamera)throw e;toast.error(e instanceof Error?e.message:'User lookup failed');return false;}}
+  async function find(value:string, fromCamera=false):Promise<Found|null>{
+    setPerson(null);
+    try{
+      const r=getDemoSession()
+        ?lookupDemoClient(c.gymId,value.trim())
+        :await lookup({data:{gymId:c.gymId,memberId:value.trim()}});
+      const p={id:r.id,full_name:r.full_name,email:r.email??'',phone:r.phone??''};
+      setPerson(p);
+      return p;
+    }catch(e){
+      if(fromCamera)throw e;
+      const m=e instanceof Error?e.message:'User lookup failed';
+      toast.error(/no existing|no sample|not found/i.test(m)?'No registered Client account matches. The person must register as a Client first.':m);
+      return null;
+    }
+  }
   const edit = useServerFn(manageStaff);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<StaffMember | null>(null);
@@ -169,7 +186,7 @@ function Staff() {
                     {i.full_name}
                     <div className="text-xs text-muted-foreground">{i.gym_name ?? gymName}</div>
                   </td>
-                  <td className={td}>{i.email}</td>
+                  <td className={td}>{i.email || "—"}</td>
                   <td className={td}>{i.role}</td>
                   <td className={td}>{invitationStatus(i.status, i.expires_at)}</td>
                   <td className={td}>{new Date(i.created_at).toLocaleDateString()}</td>
@@ -222,7 +239,6 @@ function Staff() {
               setBusy(true);
               const d = new FormData(e.currentTarget);
               try {
-                if (!String(d.get("email") ?? "").trim() && !String(d.get("phone") ?? "").trim()) throw new Error("Provide at least an email or a phone number.");
                 if (editing?.id) {
                   if (getDemoSession()) changeDemoStaff(c.gymId, editing.id, { role: String(d.get("role")), permissions, name: String(d.get("name")), phone: String(d.get("phone") ?? "") });
                   else await edit({
@@ -239,23 +255,25 @@ function Staff() {
                   toast.success("Staff permissions saved");
                   await c.selectGym(c.gymId);
                 } else {
+                  let resolved = person;
+                  if (!resolved && query.trim()) resolved = await find(query);
+                  if (!resolved)
+                    throw new Error("Look up the existing Client account by GYVORA ID, QR code, email or phone first.");
+                  const role = String(d.get("role")) as "Admin" | "Reception" | "Trainer";
                   if (getDemoSession())
-                    createDemoInvitation(
-                      c.gymId,
-                      gymName,
-                      String(d.get("name")),
-                      String(d.get("email")),
-                      String(d.get("role")) as "Admin" | "Reception" | "Trainer",
-                    );
+                    createDemoInvitation(c.gymId, gymName, resolved.full_name, resolved.email, role, {
+                      userId: resolved.id,
+                      permissions,
+                    });
                   else
                     await invite({
                       data: {
                         gymId: c.gymId,
                         action: "create",
-                        name: String(d.get("name")),
-                        email: String(d.get("email")),
-                        role: String(d.get("role")) as "Admin" | "Reception" | "Trainer",
-                        userId: person?.id,
+                        name: resolved.full_name,
+                        email: resolved.email || undefined,
+                        role,
+                        userId: resolved.id,
                         permissions,
                       },
                     });
@@ -272,21 +290,21 @@ function Staff() {
               }
             }}
           >
-            {!editing&&!getDemoSession()&&<><QRScanner open={scan} onClose={()=>setScan(false)} onScan={value=>find(value,true)}/><Field label="User ID, name, QR or email"><div className="flex gap-2"><Input aria-label="Staff user lookup" value={query} onChange={e=>{setQuery(e.target.value);setPerson(null);}}/><Button type="button" onClick={()=>void find(query)}>Look up</Button><Button type="button" variant="outline" onClick={()=>setScan(true)}>Scan QR</Button></div></Field>{person&&<p className="text-sm text-success">{person.full_name} · {person.email||'No email'} · {person.phone||'No phone'} · {person.id}</p>}</>}
+            {!editing&&<><QRScanner open={scan} onClose={()=>setScan(false)} onScan={async value=>Boolean(await find(value,true))}/><Field label="GYVORA Client ID, QR, email, phone or name"><div className="flex gap-2"><Input aria-label="Staff user lookup" value={query} onChange={e=>{setQuery(e.target.value);setPerson(null);}}/><Button type="button" onClick={()=>void find(query)}>Look up</Button><Button type="button" variant="outline" onClick={()=>setScan(true)}>Scan QR</Button></div></Field>{person&&<p className="text-sm text-success">{person.full_name} · {person.email||'No email'} · {person.phone||'No phone'} · {person.id}</p>}</>}
             <Field label="Full Name">
-              <Input key={person?.id??editing?.id??'name'} name="name" required maxLength={100} defaultValue={editing?.name??person?.full_name} readOnly={!editing&&!getDemoSession()} />
+              <Input key={person?.id??editing?.id??'name'} name="name" required maxLength={100} defaultValue={editing?.name??person?.full_name} readOnly={!editing} />
             </Field>
-            <Field label="Email (optional if phone provided)">
+            <Field label="Email (optional)">
               <Input
                 name="email"
                 type="email"
                 maxLength={255}
                 key={person?.id??editing?.id??'email'} defaultValue={editing?.email??person?.email}
-                readOnly={Boolean(editing)||!getDemoSession()}
+                readOnly
               />
             </Field>
-            <Field label="Phone (optional if email provided)">
-              <Input name="phone" type="tel" maxLength={30} key={person?.id??editing?.id??'phone'} defaultValue={editing?.phone??person?.phone} readOnly={!editing&&!getDemoSession()} />
+            <Field label="Phone (optional)">
+              <Input name="phone" type="tel" maxLength={30} key={person?.id??editing?.id??'phone'} defaultValue={editing?.phone??person?.phone} readOnly={!editing} />
             </Field>
             <Field label="Role">
               <select name="role" className={selectCls} defaultValue={editing?.role ?? "Reception"}>
@@ -295,7 +313,7 @@ function Staff() {
                 ))}
               </select>
             </Field>
-            {(editing || !getDemoSession()) && (
+            {(editing || !editing) && (
               <fieldset className="grid grid-cols-2 gap-2">
                 <legend className="mb-2 text-sm">Permissions</legend>
                 {areas.map((a) => (
@@ -331,7 +349,7 @@ function Staff() {
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button disabled={busy||(!editing&&!getDemoSession()&&!person)}>
+              <Button disabled={busy||(!editing&&!person&&!query.trim())}>
                 {busy ? "Saving…" : editing ? "Save" : "Send Invitation"}
               </Button>
             </DialogFooter>

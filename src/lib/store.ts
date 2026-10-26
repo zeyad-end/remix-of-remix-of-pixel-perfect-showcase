@@ -12,6 +12,8 @@ import {
 
 export type Member = (typeof membersSeed)[number] & {
   clientId?: string;
+  /** 'registered' links to a real account via clientId; 'manual' is a gym-owned record only. */
+  source?: 'registered' | 'manual';
   gyvoraId?: string | undefined;
   memberQrId?: string | undefined;
   planPrice?: number;

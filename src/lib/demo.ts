@@ -763,22 +763,32 @@ export function changeDemoInvitation(gymId: string, id: string, action: "resend"
   });
 }
 
+/** All local client account IDs that belong to the current individual session. */
+function sessionClientIds(email: string): Set<string> {
+  const ids = new Set<string>();
+  const normalized = email.trim().toLowerCase();
+  if (normalized) ids.add(demoUserId(normalized));
+  const preview = readPreviewSession();
+  if (preview?.type === "individual") ids.add(preview.id);
+  for (const c of localClients()) if (normalized && c.email.toLowerCase() === normalized) ids.add(c.id);
+  return ids;
+}
 export function pendingDemoInvitations(email: string, rows = demoState.invitations) {
   const normalized = email.trim().toLowerCase();
-  return normalized
-    ? rows.filter(
-        (i) =>
-          i.email.toLowerCase() === normalized &&
-          invitationStatus(i.status, i.expires_at) === "Pending",
-      )
-    : [];
+  const ids = sessionClientIds(email);
+  return rows.filter(
+    (i) =>
+      invitationStatus(i.status, i.expires_at) === "Pending" &&
+      ((normalized && i.email.toLowerCase() === normalized) ||
+        (i.invited_user_id !== null && ids.has(i.invited_user_id))),
+  );
 }
 export function respondDemoInvitation(id: string, accept: boolean) {
   const info = getDemoSessionInfo();
   if (!info || info.kind !== "individual") throw new Error("Open your member account to respond");
   const row = pendingDemoInvitations(info.email).find((i) => i.id === id);
   if (!row) throw new Error("Invitation unavailable for this account");
-  const userId = demoUserId(info.email);
+  const userId = row.invited_user_id ?? demoUserId(info.email);
   const role: DemoStaffRole = {
     id: row.id,
     userId,

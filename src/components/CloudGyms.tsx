@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
-import { listAdminGyms, setGymFrozen, changeGymDeletion, editAdminGym } from '@/lib/platform-admin.functions';
+import { listAdminGyms, setGymFrozen, changeGymDeletion, editAdminGym, setGymAdminNote } from '@/lib/platform-admin.functions';
 import { Input } from './ui/input';
 import { Field } from './kit';
 import { Button } from './ui/button';
@@ -10,6 +10,7 @@ import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { sendAccountMessage } from '@/lib/account-messages.functions';
 import { MessageSquare } from 'lucide-react';
+import { AdminNoteCell } from './AdminNoteCell';
 import { gymPrices } from '@/lib/platform-subscriptions';
 import { egp } from '@/lib/mock';
 import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth, approvedGymTotals } from '@/lib/approved-gym-columns';
@@ -23,6 +24,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
   const freeze = useServerFn(setGymFrozen);
   const remove = useServerFn(changeGymDeletion);
   const saveGym = useServerFn(editAdminGym);
+  const saveNote = useServerFn(setGymAdminNote);
   const [editing,setEditing]=useState<AdminGym|null>(null);
   const [gymName,setGymName]=useState('');
   const [rows, setRows] = useState<AdminGym[]>([]);
@@ -91,7 +93,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
         <span className="text-muted-foreground">Total annual price: <span className="font-semibold tabular-nums text-foreground">{egp(totals.annualPrice)}</span></span>
       </div>}
       {error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
-      {!loaded ? <TableSkeleton cols={deleted ? 7 : 9} /> : <><DataTable head={deleted ? deletedHead : approvedGymColumns} widths={deleted ? undefined : approvedGymColumnWidths} minWidth={deleted ? 640 : approvedGymTableMinWidth}>
+      {!loaded ? <TableSkeleton cols={deleted ? 7 : 10} /> : <><DataTable head={deleted ? deletedHead : approvedGymColumns} widths={deleted ? undefined : approvedGymColumnWidths} minWidth={deleted ? 640 : approvedGymTableMinWidth}>
         {visibleRows.map((g, i) => {
           const prices = gymPrices({ plan: g.plan });
           return (
@@ -112,6 +114,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
               <td className={`${td} whitespace-nowrap tabular-nums`}>{prices.monthlyPrice > 0 ? egp(prices.monthlyPrice) : '—'}</td>
               <td className={`${td} whitespace-nowrap tabular-nums`}>{prices.annualPrice > 0 ? egp(prices.annualPrice) : '—'}</td>
               <td className={`${td} whitespace-nowrap`}><span className={g.frozen ? 'text-destructive' : 'text-success'}>{g.frozen ? 'Frozen' : 'Active'}</span></td>
+              <td className={td}><AdminNoteCell gymName={g.name} note={g.adminNote} onSave={async note=>{await saveNote({data:{gymId:g.id,note}});await load();}} /></td>
               <td className={`${td} min-w-[19rem]`}><div className="flex flex-nowrap gap-2">
                 <Button size="sm" variant="outline" disabled={busy} onClick={()=>{setEditing(g);setGymName(g.name);}}>Edit</Button>
                 {g.frozen ? <Button size="sm" variant="secondary" disabled={busy} onClick={()=>void unfreeze(g)}>Unfreeze</Button> : <Button size="sm" variant="secondary" disabled={busy} onClick={()=>{setFreezing(g);setNote('');}}>Freeze</Button>}

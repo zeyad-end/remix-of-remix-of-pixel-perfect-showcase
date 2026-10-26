@@ -9,6 +9,7 @@ import { seo } from '@/lib/seo';
 import { gymPrices } from '@/lib/platform-subscriptions';
 import { egp } from '@/lib/mock';
 import { MessageSquare } from 'lucide-react';
+import { AdminNoteCell } from '@/components/AdminNoteCell';
 import { PlatformGymEdit } from '@/components/PlatformGymEdit';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -56,6 +57,7 @@ function DemoGyms() {
             <td className={`${td} whitespace-nowrap tabular-nums`}>{egp(prices.monthlyPrice)}</td>
             <td className={`${td} whitespace-nowrap tabular-nums`}>{egp(prices.annualPrice)}</td>
             <td className={`${td} whitespace-nowrap`}><span className={g.status==='Active'?'text-success':'text-muted-foreground'}>{g.status}</span></td>
+            <td className={td}><AdminNoteCell gymName={g.name} note={g.notes ?? ''} onSave={note=>{editGym(g.id,{name:g.name,plan:g.plan,notes:note});}} /></td>
             <td className={`${td} min-w-[19rem]`}>
               <div className="flex flex-nowrap gap-2">
                 <Button size="icon" variant="ghost" aria-label={`Message ${g.name} owner`} title="Message gym owner" onClick={()=>{setMessaging(g);setMessageBody('');}}><MessageSquare className="h-4 w-4"/></Button>

@@ -33,3 +33,11 @@ export const setClientFrozen = createServerFn({ method: 'POST' }).middleware([re
     if (error) throw new Error(error.message);
     return true;
   });
+
+export const markAccountMessagesRead = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
+  .inputValidator(input => z.object({ ids: z.array(z.string().uuid()).max(500) }).strict().parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc('mark_account_messages_read', { ids: data.ids });
+    if (error) throw new Error('Could not update messages');
+    return true;
+  });

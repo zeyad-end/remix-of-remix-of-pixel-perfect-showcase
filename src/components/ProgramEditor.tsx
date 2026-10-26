@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { CheckCheck, Plus, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
@@ -47,6 +47,7 @@ export function ProgramEditor({
   trainers?: Trainer[];
 }) {
   const [name, setName] = useState("");
+  const [savedFlash, setSavedFlash] = useState(false);
   const [trainer, setTrainer] = useState("");
   const [notes, setNotes] = useState("");
   const [rows, setRows] = useState<Workout["exercises"]>([empty()]);

@@ -540,9 +540,10 @@ export function resetPrototypeData() {
     const rows = Object.entries(samples).map(([scope, sample]) => {
       const id = `prototype-${scope}`;
       const saved = demoState.requests.find(r => r.id === id);
-      return {...sample, id, ownerName:'Prototype reviewer', email:scope, phone:'', submittedAt:sample.requestDate, ...(saved ? {gymName:saved.gymName, plan:saved.plan, status:saved.status, decisionNote:saved.decisionNote, decidedAt:saved.decidedAt} : {})};
+      return {...sample, id, ownerName:'Prototype reviewer', email:scope, phone:sample.phone ?? '', submittedAt:sample.requestDate, ...(saved ? {gymName:saved.gymName, plan:saved.plan, status:saved.status, decisionNote:saved.decisionNote, decidedAt:saved.decidedAt} : {})};
     });
     demoState.requests = [...rows, ...demoState.requests.filter(r => !r.id.startsWith('prototype-'))];
+    demoState.gyms = demoState.gyms.map(g => { const s = samples[g.email]; return s?.phone ? {...g, phone: s.phone} : g; });
     prototypeStorage().setItem(DATA_KEY, JSON.stringify(demoState));
   }
   listeners.forEach(l => l());

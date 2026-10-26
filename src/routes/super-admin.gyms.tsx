@@ -37,7 +37,7 @@ function DemoGyms() {
   return (
     <div>
       <PageHeader title="Approved Gyms" subtitle={`Total approved gyms: ${gyms.length} · fictional demo data.`} />
-      <DataTable head={['#', 'Gym Name', 'Actions', 'Status', 'Phone', 'Email', 'Plan', 'Monthly price', 'Annual price', 'Start', 'End', 'Notes']}>
+      <DataTable head={['#', 'Gym Name', 'Actions', 'Status', 'Contact', 'Email', 'Plan', 'Monthly price', 'Annual price', 'Start', 'End', 'Notes']}>
         {gyms.map((g, index) => (
           <tr key={g.id}>
             <td className={td}>{index + 1}</td>
@@ -55,7 +55,7 @@ function DemoGyms() {
               </div>
             </td>
             <td className={td}><span className={g.status==='Active'?'text-success':'text-muted-foreground'}>{g.status}</span></td>
-            <td className={td}>{g.phone}</td>
+            <td className={td}>{g.phone || 'Not provided'}</td>
             <td className={`${td} max-w-48 break-words`}>{g.email.startsWith('fictional-') ? 'Fictional owner' : g.email}</td>
             <td className={td}>{g.plan}</td>
             <td className={td}>{egp(gymPrices(g).monthlyPrice)}</td>

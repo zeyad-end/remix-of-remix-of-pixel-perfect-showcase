@@ -91,7 +91,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
               <Button size="sm" variant="destructive" disabled={busy} onClick={()=>{setDeleting(g);setDeletionNote('');}}>Delete</Button>
               <Button size="icon" variant="ghost" aria-label={`Message ${g.name} owner`} disabled={busy} onClick={()=>{setMessaging(g);setMessageBody('');}}><MessageSquare className="h-4 w-4"/></Button>
             </div></td>}
-            <td className={td}>{g.ownerName || '—'}<span className="block text-xs text-muted-foreground">Email: {g.ownerEmail || 'Not provided'}</span><span className="block text-xs text-muted-foreground">Phone: {g.ownerPhone || 'Not provided'}</span></td>
+            <td className={td}>{g.ownerName || '—'}<span className="block text-xs text-muted-foreground">Email: {g.ownerEmail || 'Not provided'}</span></td><td className={td}>{g.ownerPhone || 'Not provided'}</td>
             {deleted ? <>
               <td className={td}>{g.deletedAt ? new Date(g.deletedAt).toLocaleString() : '—'}</td>
               <td className={`${td} max-w-sm whitespace-pre-wrap break-words`}>{g.deletionNote || '—'}</td>

@@ -4,7 +4,7 @@ import { prototypePreviewEnabled } from './preview-environment';
 
 export const SAMPLE_GYM_ID = 'GYVORA-G-123';
 export const SAMPLE_CLIENT_ID = 'GYVORA-C-456';
-export type SampleRequest = {id: string; gymName: string; plan: string; requestDate: string; status: 'Pending' | 'Approved' | 'Rejected'; decisionNote?: string; skipped: boolean; trialStartedAt?: number; trialExpiresAt?: number};
+export type SampleRequest = {id: string; gymName: string; plan: string; requestDate: string; status: 'Pending' | 'Approved' | 'Rejected'; decisionNote?: string; skipped: boolean; phone?: string; trialStartedAt?: number; trialExpiresAt?: number};
 const key = 'gyvora-fictional-subscription-scenario';
 const scopedKey = 'gyvora-fictional-subscription-contacts';
 export const PROTOTYPE_TRIAL_MS = 60 * 60 * 1000;
@@ -29,6 +29,8 @@ export function readSampleRequest(scope = currentScope()): SampleRequest | null 
   } catch {return null;}
 }
 export function saveSampleRequest(request: SampleRequest, scope = currentScope()) {
+  const contact = readPreviewSession()?.contact;
+  if (contact) request = {...request, phone: contact};
   if (!prototypePreviewEnabled()) throw new Error('Prototype scenario unavailable.');
   if (scope) localStorage.setItem(scopedKey, JSON.stringify({...readRegistry(), [scope]:request}));
   localStorage.setItem(key,JSON.stringify(request));

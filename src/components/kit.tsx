@@ -61,7 +61,7 @@ export function Avatar({ initials, size = "md" }: { initials: string; size?: "sm
   return <span className={cn("grid shrink-0 place-items-center rounded-full bg-accent font-display font-semibold text-primary", s)}>{initials}</span>;
 }
 
-export function DataTable({ head, children, minWidth = 640, widths }: { head: string[]; children: ReactNode; minWidth?: number; widths?: (string | undefined)[] }) {
+export function DataTable({ head, children, minWidth = 640, widths }: { head: string[]; children: ReactNode; minWidth?: number; widths?: (string | undefined)[] | undefined }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm" style={{ minWidth }}>

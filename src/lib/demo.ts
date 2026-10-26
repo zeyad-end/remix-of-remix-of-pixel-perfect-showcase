@@ -13,7 +13,7 @@ import { demoIdentity, demoIdentityMatches, ensureDemoIdentity } from './demo-id
 import { normalizeAccountLookup } from './gyvora-id';
 import { validateMembershipChanges } from './membership-link';
 import { gymToday } from './gym-reporting';
-import { readSampleRequests } from './prototype-scenario';
+import { readSampleRequests, SAMPLE_CLIENT_ID } from './prototype-scenario';
 
 /**
  * Prototype-only demo layer. Completely isolated from production auth and the
@@ -328,11 +328,17 @@ export function prepareDemoIdentities() {
   }
 }
 export function lookupDemoClient(gymId:string,value:string) {
-  if(getDemoSession()!=='owner'||!['demo-gym','demo-gym-north'].includes(gymId)) throw new Error('Only the local gym owner can look up demo clients');
+  if(getDemoSession()!=='owner'||!(['demo-gym','demo-gym-north'].includes(gymId)||gymId.startsWith('prototype-gym-'))) throw new Error('Only the local gym owner can look up demo clients');
   const account=getDemoAccount();
   if(account&&!demoOwnerHasAccess(account))throw new Error('Gym access unavailable');
   const input=normalizeAccountLookup(value).toLowerCase();
   const legacy=JSON.parse(prototypeStorage().getItem('ironhaus-demo-member-identities') ?? '{}') as Record<string,string>;
+  if(readPreviewSession()&&input===SAMPLE_CLIENT_ID.toLowerCase()){
+    // Prototype client accounts all display the fictional sample ID; link the most recent one on this browser.
+    const sample=localClients().filter(p=>p.id.startsWith('preview-individual-')).at(-1);
+    if(!sample)throw new Error('No sample client account found on this browser. Sign in as a Client first.');
+    return {...sample,member_id:SAMPLE_CLIENT_ID,gyvora_id:SAMPLE_CLIENT_ID};
+  }
   const matches=localClients().filter(p=>p.id.toLowerCase()===input||demoIdentityMatches('C',p.id,input)||legacy[p.id]?.toLowerCase()===input||(p.email&&p.email.toLowerCase()===input)||p.full_name.toLowerCase()===input);
   if(matches.length>1)throw new Error('More than one account has this name. Use the intended GYVORA ID or email.');
   const p=matches[0];

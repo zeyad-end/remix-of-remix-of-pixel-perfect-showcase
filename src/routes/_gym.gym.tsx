@@ -14,6 +14,7 @@ import { useCloud } from '@/components/CloudProvider';
 import { canChange } from '@/lib/gym-permissions';
 import { readPreviewSession } from '@/lib/preview-session';
 import { SampleAccountQR } from '@/components/SampleAccountQR';
+import { GalleryImage } from '@/components/GymGallery';
 
 export const Route = createFileRoute("/_gym/gym")({
   head: () => seo("Gym profile", "Manage your gym's public profile, plans, trainers and gallery."),
@@ -111,7 +112,7 @@ function GymProfile() {
             <img src={g1} alt="Free weights" loading="lazy" width={944} height={704} className="col-span-2 row-span-2 h-full w-full rounded-lg object-cover" />
             <img src={g2} alt="Cardio zone" loading="lazy" width={944} height={704} className="aspect-[4/3] w-full rounded-lg object-cover" />
             <img src={cover} alt="Main floor" loading="lazy" width={1600} height={640} className="aspect-[4/3] w-full rounded-lg object-cover" />
-            {gym.gallery.map((src, i) => <img key={i} src={src} alt="Gallery" className="aspect-[4/3] w-full rounded-lg object-cover" />)}
+            {gym.gallery.map((src, i) => <GalleryImage key={src + i} path={src} />)}
           </div>
         </Panel>
         <div className="space-y-6">

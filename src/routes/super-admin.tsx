@@ -43,7 +43,7 @@ function SuperAdminContent() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   if (c.role !== 'super_admin') return <div className="p-12">Administrator access required.</div>;
   return (
-    <div className={cn('mx-auto w-full px-4 py-10 sm:px-6', path === '/super-admin/gyms' ? 'max-w-[1700px]' : 'max-w-6xl')}>
+    <div className={cn('mx-auto w-full py-10', path === '/super-admin/gyms' ? 'max-w-[2400px] px-4' : 'max-w-6xl px-6')}>
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <AppBrand />

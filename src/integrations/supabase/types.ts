@@ -344,6 +344,7 @@ export type Database = {
       }
       gyms: {
         Row: {
+          admin_note: string
           created_at: string
           deleted_at: string | null
           deletion_history: Json
@@ -356,6 +357,7 @@ export type Database = {
           owner_id: string
         }
         Insert: {
+          admin_note?: string
           created_at?: string
           deleted_at?: string | null
           deletion_history?: Json
@@ -368,6 +370,7 @@ export type Database = {
           owner_id: string
         }
         Update: {
+          admin_note?: string
           created_at?: string
           deleted_at?: string | null
           deletion_history?: Json
@@ -880,6 +883,10 @@ export type Database = {
       }
       set_client_frozen: {
         Args: { frozen: boolean; note: string; target: string }
+        Returns: undefined
+      }
+      set_gym_admin_note: {
+        Args: { g: string; note: string }
         Returns: undefined
       }
       set_gym_deleted: {

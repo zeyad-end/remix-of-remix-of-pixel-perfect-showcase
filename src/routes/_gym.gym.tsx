@@ -108,13 +108,6 @@ function GymProfile() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <GymGalleryManager editable={canChange(c.role,c.permissions,'Profile','edit')} />
-        <Panel title="Featured" className="lg:col-span-2 hidden">
-          <div className="grid grid-cols-3 gap-3">
-            <img src={g1} alt="Free weights" loading="lazy" width={944} height={704} className="col-span-2 row-span-2 h-full w-full rounded-lg object-cover" />
-            <img src={g2} alt="Cardio zone" loading="lazy" width={944} height={704} className="aspect-[4/3] w-full rounded-lg object-cover" />
-            <img src={cover} alt="Main floor" loading="lazy" width={1600} height={640} className="aspect-[4/3] w-full rounded-lg object-cover" />
-          </div>
-        </Panel>
         <div className="space-y-6">
           <Panel title="Location">
             <div className="grid h-32 place-items-center rounded-lg bg-secondary text-xs text-muted-foreground"><MapPin className="h-6 w-6 text-primary" /></div>

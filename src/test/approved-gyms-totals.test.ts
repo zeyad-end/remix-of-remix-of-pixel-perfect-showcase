@@ -1,9 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { approvedGymColumns, approvedGymTotals } from '@/lib/approved-gym-columns';
+import { approvedGymColumns, approvedGymColumnWidths, approvedGymTotals, formatGymDate } from '@/lib/approved-gym-columns';
 
 describe('Approved Gyms numbering and price totals', () => {
   it('keeps # as the first column followed by the required order', () => {
-    expect(approvedGymColumns).toEqual(['#', 'Gym Name', 'Email', 'Contact', 'Plan', 'Monthly Price', 'Annual Price', 'Status', 'Notes', 'Actions']);
+    expect(approvedGymColumns).toEqual(['#', 'Gym Name', 'Email', 'Contact', 'Plan', 'Monthly Price', 'Annual Price', 'Subscription Start', 'Subscription End', 'Status', 'Notes', 'Actions']);
+  });
+
+  it('places Subscription Start and End immediately before Status with matching column widths', () => {
+    expect(approvedGymColumns.indexOf('Subscription Start')).toBe(approvedGymColumns.indexOf('Status') - 2);
+    expect(approvedGymColumns.indexOf('Subscription End')).toBe(approvedGymColumns.indexOf('Status') - 1);
+    expect(approvedGymColumnWidths).toHaveLength(approvedGymColumns.length);
+  });
+
+  it('formats saved subscription dates and shows an em dash when a date is missing', () => {
+    expect(formatGymDate('2026-10-26')).toBe('26 Oct 2026');
+    expect(formatGymDate('')).toBe('—');
+    expect(formatGymDate(undefined)).toBe('—');
+    expect(formatGymDate('not-a-date')).toBe('—');
   });
 
   it('sums monthly and annual prices across listed gyms, treating missing prices as zero', () => {

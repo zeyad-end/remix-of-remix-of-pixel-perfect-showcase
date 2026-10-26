@@ -13,7 +13,7 @@ import { AdminNoteCell } from '@/components/AdminNoteCell';
 import { PlatformGymEdit } from '@/components/PlatformGymEdit';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth, approvedGymTotals } from '@/lib/approved-gym-columns';
+import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth, approvedGymTotals, formatGymDate } from '@/lib/approved-gym-columns';
 
 export const Route = createFileRoute('/super-admin/gyms')({
    head: () => seo('Approved gyms', 'Manage approved gyms, freeze access or move gyms to reversible deletion.'),
@@ -56,6 +56,8 @@ function DemoGyms() {
             <td className={`${td} whitespace-nowrap`}>{g.plan}</td>
             <td className={`${td} whitespace-nowrap tabular-nums`}>{egp(prices.monthlyPrice)}</td>
             <td className={`${td} whitespace-nowrap tabular-nums`}>{egp(prices.annualPrice)}</td>
+            <td className={`${td} whitespace-nowrap tabular-nums`}>{formatGymDate(g.start)}</td>
+            <td className={`${td} whitespace-nowrap tabular-nums`}>{formatGymDate(g.end)}</td>
             <td className={`${td} whitespace-nowrap`}><span className={g.status==='Active'?'text-success':'text-muted-foreground'}>{g.status}</span></td>
             <td className={td}><AdminNoteCell gymName={g.name} note={g.notes ?? ''} onSave={(note: string)=>{editGym(g.id,{name:g.name,plan:g.plan,notes:note});}} /></td>
             <td className={`${td} min-w-[19rem]`}>

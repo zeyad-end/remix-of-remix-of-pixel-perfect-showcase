@@ -18,12 +18,15 @@ export function MapView({ point, className = "h-40 w-full" }: { point: GeoPoint;
 }
 
 /** Read-only location block shared by owner and client profile views. */
-export function LocationSummary({ address, coords }: { address?: string | undefined; coords?: GeoPoint | undefined }) {
+export function LocationSummary({ address, coords, directions = false }: { address?: string | undefined; coords?: GeoPoint | undefined; directions?: boolean }) {
   const p = validPoint(coords) ? coords : null;
+  if (!p && !address) return <div className="grid h-32 place-items-center gap-1 rounded-lg bg-secondary p-4 text-center text-sm text-muted-foreground"><MapPin className="h-6 w-6 text-primary" />Location not provided</div>;
+  const dirUrl = p ? `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}` : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address ?? "")}`;
   return <div className="space-y-3">
-    {p ? <MapView point={p} className="h-40 w-full" /> : <div className="grid h-32 place-items-center rounded-lg bg-secondary text-xs text-muted-foreground"><MapPin className="h-6 w-6 text-primary" /></div>}
-    <p className="break-words text-sm text-muted-foreground">{address || "Location not provided"}</p>
+    {p ? <MapView point={p} className="h-40 w-full" /> : <div className="grid h-32 place-items-center rounded-lg bg-secondary text-xs text-muted-foreground"><MapPin className="h-6 w-6 text-primary" />Map pin not set</div>}
+    <p className="break-words text-sm text-muted-foreground">{address || "Address not provided"}</p>
     {p && <a href={mapsLink(p)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">{fmtPoint(p)}<ExternalLink className="h-3 w-3" /></a>}
+    {directions && <Button asChild size="sm" className="w-full"><a href={dirUrl} target="_blank" rel="noreferrer"><MapPin className="h-4 w-4" />Get directions</a></Button>}
   </div>;
 }
 

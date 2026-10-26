@@ -1,3 +1,5 @@
+import { gymPrices } from '@/lib/platform-subscriptions';
+
 /** Approved Gyms table columns, in the required display order. */
 export const approvedGymColumns = ['#', 'Gym Name', 'Email', 'Contact', 'Plan', 'Monthly Price', 'Annual Price', 'Status', 'Actions'];
 

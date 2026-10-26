@@ -18,11 +18,6 @@ export const Route = createFileRoute('/super-admin/gyms')({
   component: Gyms,
 });
 
-/** Approved Gyms columns, in the required order. */
-export const approvedGymColumns = ['Gym Name', 'Email', 'Contact', 'Plan', 'Monthly Price', 'Annual Price', 'Status', 'Actions'];
-export const approvedGymColumnWidths = ['15rem', '18rem', '11rem', '9rem', '8.5rem', '8.5rem', '8rem', '19rem'];
-export const approvedGymTableMinWidth = 1200;
-
 function Gyms() {
   return getDemoSession()?<DemoGyms/>:<CloudGyms/>;
 }

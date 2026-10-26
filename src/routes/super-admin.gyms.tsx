@@ -12,6 +12,7 @@ import { MessageSquare } from 'lucide-react';
 import { PlatformGymEdit } from '@/components/PlatformGymEdit';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth } from '@/lib/approved-gym-columns';
 
 export const Route = createFileRoute('/super-admin/gyms')({
    head: () => seo('Approved gyms', 'Manage approved gyms, freeze access or move gyms to reversible deletion.'),

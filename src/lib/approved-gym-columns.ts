@@ -11,10 +11,11 @@ export const approvedGymColumnWidths = ['3rem', '15rem', '18rem', '11rem', '9rem
 export const approvedGymTableMinWidth = 1520;
 
 /** Formats a saved subscription date for the table; missing or invalid dates show as an em dash. */
+/** Renders a saved date as numeric DD/MM/YYYY (e.g. 05/03/2026); missing or invalid dates show an em dash. */
 export function formatGymDate(value?: string | null) {
   if (!value) return '—';
   const date = parseISO(value);
-  return Number.isFinite(date.getTime()) ? format(date, 'd MMM yyyy') : '—';
+  return Number.isFinite(date.getTime()) ? format(date, 'dd/MM/yyyy') : '—';
 }
 
 /** Sums the monthly and annual prices of every listed gym; missing prices count as zero. */

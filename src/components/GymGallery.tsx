@@ -79,7 +79,7 @@ function PhotoDialog({ photo, onClose }: { photo: GalleryPhoto | "new" | null; o
         <DialogHeader><DialogTitle>{isNew ? "Add photo" : "Edit photo"}</DialogTitle></DialogHeader>
         {preview ? <div className="space-y-3">
           <div className="relative h-56 w-full overflow-hidden rounded-lg bg-secondary sm:h-72"><Cropper image={preview} crop={crop} zoom={zoom} aspect={ASPECT} onCropChange={setCrop} onZoomChange={setZoom} onCropComplete={onComplete} /></div>
-          <label className="flex items-center gap-3 text-xs text-muted-foreground">Zoom<input type="range" min={1} max={3} step={0.01} value={zoom} onChange={e => setZoom(Number(e.target.value))} className="flex-1 accent-[hsl(var(--primary))]" aria-label="Zoom" /></label>
+          <label className="flex items-center gap-3 text-xs text-muted-foreground">Zoom<input type="range" min={1} max={3} step={0.01} value={zoom} onChange={e => setZoom(Number(e.target.value))} className="flex-1 accent-primary" aria-label="Zoom" /></label>
           <div className="flex items-center gap-3"><span className="text-xs text-muted-foreground">Gallery preview</span>{live ? <img src={live} alt="Cropped preview" className="aspect-[4/3] w-28 rounded-md object-cover" /> : <div className="aspect-[4/3] w-28 animate-pulse rounded-md bg-secondary" />}</div>
         </div> : photo && photo !== "new" ? <GalleryImage path={photo.path} /> : <div className="grid aspect-[4/3] place-items-center rounded-lg bg-secondary text-sm text-muted-foreground">No photo selected</div>}
         <Input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { setFile(e.target.files?.[0] ?? null); e.target.value = ""; }} aria-label={isNew ? "Choose photo" : "Replace photo"} />

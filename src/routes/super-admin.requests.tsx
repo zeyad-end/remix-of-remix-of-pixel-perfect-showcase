@@ -54,7 +54,7 @@ function Requests() {
             <td className={td}>{r.gymName}{r.id.startsWith('prototype-')&&<span className="block text-xs text-muted-foreground">Fictional sample</span>}</td>
             <td className={td}>{r.plan}</td>
             <td className={td}>{r.requestDate}</td>
-            <td className={td}>{r.email || r.phone || '—'}</td>
+            <td className={td}>{r.phone || 'Not provided'}</td>
             <td className={td}>
               <div className="flex gap-2">
                 <StatusPill status={r.status}/>

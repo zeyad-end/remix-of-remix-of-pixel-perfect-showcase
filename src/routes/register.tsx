@@ -10,6 +10,7 @@ import { AppleIcon, GoogleIcon } from '@/components/SocialSignIn';
 import { verifyPreviewSignup, type PreviewChallenge } from '@/lib/preview-session';
 import { AppBrand } from '@/components/AppBrand';
 import { supabase } from '@/integrations/supabase/client';
+import { prototypePreviewEnabled } from '@/lib/preview-environment';
 
 export const Route = createFileRoute('/register')({
   head: () => seo('Create account', 'Create a GYVORA Gym or Client account.'),
@@ -27,10 +28,12 @@ function Register() {
   const [challenge, setChallenge] = useState<PreviewChallenge | null>(null);
   const [verified, setVerified] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+  const [prototypeGym, setPrototypeGym] = useState(false);
   function prototypeSocial() {
     toast.info('Prototype only — social sign-up is not connected and no account is created.');
   }
-  function changed() {setChallenge(null);setVerified(false);setCode('');setError('');}
+  function changed() {setChallenge(null);setVerified(false);setCode('');setError('');setPhoneError('');}
   function send(channel: 'email' | 'phone') {
     const contact = (channel === 'email' ? email : phone).trim();
     if (!contact) {setError('Enter an email or phone number.');return;}
@@ -46,7 +49,15 @@ function Register() {
     const fullName = String(new FormData(form).get('full_name') ?? '').trim();
     const password = String(new FormData(form).get('password') ?? '');
     if (!fullName) {setError('Enter your full name.');return;}
-    if (!email.trim()) {setError('Enter an email address — it is your sign-in identifier.');return;}
+    if (accountType === 'gym') {
+      if (!phone.trim()) {setPhoneError('Enter your phone number — it is required for Gym Accounts.');return;}
+      if (prototypePreviewEnabled()) {
+        // Prototype only: no real account, no SMS. The phone identifies the prototype gym on login.
+        form.reset();setEmail('');setPhone('');setCode('');setChallenge(null);setError('');setPrototypeGym(true);setSuccess(true);return;
+      }
+      if (!email.trim()) {setError('Real Gym Accounts currently need an email to sign in — phone sign-in is not set up yet.');return;}
+    }
+    if (accountType !== 'gym' && !email.trim()) {setError('Enter an email address — it is your sign-in identifier.');return;}
     if (!verified) {setError('Send a simulated code and select Verify first.');return;}
     setBusy(true);setError('');
     try {
@@ -65,12 +76,13 @@ function Register() {
     <AppBrand large className="mb-8"/>
     <h1 className="text-2xl font-semibold">Create your account</h1>
     <p role="status" className="mt-3 text-sm text-muted-foreground">Creates a real saved account. In this preview the code step is simulated — no email or SMS is sent.</p>
-    {success ? <div className="mt-8 space-y-4"><h2 className="text-xl font-semibold">Account created</h2><p className="text-sm text-muted-foreground">Your account was saved. Sign in with your email and password.</p><Button onClick={() => void navigate({ to: '/', search: { created: true } })}>Back to login</Button></div> :
+    {success ? <div className="mt-8 space-y-4"><h2 className="text-xl font-semibold">Account created</h2><p className="text-sm text-muted-foreground">{prototypeGym ? 'Prototype gym account ready — no real account was created and no SMS was sent. Sign in as Gym Account with the same phone number.' : 'Your account was saved. Sign in with your email and password.'}</p><Button onClick={() => void navigate({ to: '/', search: { created: true } })}>Back to login</Button></div> :
     <form className="mt-6 grid gap-4 sm:grid-cols-2" onSubmit={e => {void createAccount(e);}}>
       <div className="sm:col-span-2"><AccountTypeSelector value={accountType} onChange={value => {if(value==='dashboard')return;setAccountType(value);changed();}}/></div>
       <Field label="Full Name" className="sm:col-span-2"><Input name="full_name" required maxLength={100} autoComplete="off"/></Field>
-      <Field label="Email" className="sm:col-span-2"><div className="flex gap-2"><Input name="email" type="email" value={email} onChange={e => {setEmail(e.target.value);changed();}} autoComplete="off"/><Button type="button" variant="outline" aria-label="Send code to email" onClick={() => send('email')}>Send Code</Button></div></Field>
-      <Field label="Phone Number" className="sm:col-span-2"><div className="flex gap-2"><Input name="phone" type="tel" value={phone} onChange={e => {setPhone(e.target.value);changed();}} autoComplete="off"/><Button type="button" variant="outline" aria-label="Send code to phone" onClick={() => send('phone')}>Send Code</Button></div></Field>
+      <Field label={accountType === 'gym' ? 'Email (optional)' : 'Email'} className="sm:col-span-2"><div className="flex gap-2"><Input name="email" type="email" value={email} onChange={e => {setEmail(e.target.value);changed();}} autoComplete="off"/><Button type="button" variant="outline" aria-label="Send code to email" onClick={() => send('email')}>Send Code</Button></div></Field>
+      <Field label={accountType === 'gym' ? 'Phone Number *' : 'Phone Number'} className="sm:col-span-2"><div className="flex gap-2"><Input name="phone" type="tel" value={phone} onChange={e => {setPhone(e.target.value);changed();}} autoComplete="off" aria-invalid={!!phoneError} aria-label="Phone Number"/><Button type="button" variant="outline" aria-label="Send code to phone" onClick={() => send('phone')}>Send Code</Button></div></Field>
+      {phoneError && <p role="alert" className="-mt-2 text-sm text-destructive sm:col-span-2">{phoneError}</p>}
       {challenge && <><p className="text-sm text-muted-foreground sm:col-span-2">Simulated verification — no email or SMS sent. Enter any non-empty sample code.</p><Field label="Verification code" className="sm:col-span-2"><div className="flex gap-2"><Input value={code} onChange={e => {setCode(e.target.value);setVerified(false);}} autoComplete="off"/><Button type="button" variant="outline" onClick={verify}>Verify</Button></div></Field></>}
       {verified && <p role="status" className="text-sm text-success sm:col-span-2">Sample code accepted — verification simulated.</p>}
       <Field label="Password" className="sm:col-span-2"><Input name="password" type="password" required minLength={8} maxLength={128} autoComplete="off"/></Field>

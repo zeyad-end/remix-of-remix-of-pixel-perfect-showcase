@@ -80,7 +80,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
     <div>
       <PageHeader title={deleted ? "Deleted Gyms" : "Approved Gyms"} subtitle={`Total ${deleted ? "deleted" : "approved"} gyms: ${visibleRows.length}`} />
       {error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
-      {!loaded ? <TableSkeleton cols={6} /> : <><DataTable head={deleted ? ['#','Gym Name','Owner','Deletion date','Notes / Reason','Actions'] : ['#', 'Gym Name', 'Actions', 'Owner', 'Plan', 'Status', 'Freeze note']}>
+      {!loaded ? <TableSkeleton cols={7} /> : <><DataTable head={deleted ? ['#','Gym Name','Owner','Contact','Deletion date','Notes / Reason','Actions'] : ['#', 'Gym Name', 'Actions', 'Owner', 'Contact', 'Plan', 'Status', 'Freeze note']}>
         {visibleRows.map((g, i) => (
           <tr key={g.id}>
             <td className={td}>{i + 1}</td>
@@ -91,7 +91,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
               <Button size="sm" variant="destructive" disabled={busy} onClick={()=>{setDeleting(g);setDeletionNote('');}}>Delete</Button>
               <Button size="icon" variant="ghost" aria-label={`Message ${g.name} owner`} disabled={busy} onClick={()=>{setMessaging(g);setMessageBody('');}}><MessageSquare className="h-4 w-4"/></Button>
             </div></td>}
-            <td className={td}>{g.ownerName || '—'}<span className="block text-xs text-muted-foreground">Email: {g.ownerEmail || 'Not provided'}</span><span className="block text-xs text-muted-foreground">Phone: {g.ownerPhone || 'Not provided'}</span></td>
+            <td className={td}>{g.ownerName || '—'}<span className="block text-xs text-muted-foreground">Email: {g.ownerEmail || 'Not provided'}</span></td><td className={td}>{g.ownerPhone || 'Not provided'}</td>
             {deleted ? <>
               <td className={td}>{g.deletedAt ? new Date(g.deletedAt).toLocaleString() : '—'}</td>
               <td className={`${td} max-w-sm whitespace-pre-wrap break-words`}>{g.deletionNote || '—'}</td>

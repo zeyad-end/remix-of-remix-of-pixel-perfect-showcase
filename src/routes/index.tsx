@@ -43,6 +43,7 @@ function Login() {
   const [remember, setRemember] = useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
+  const [phoneError,setPhoneError]=useState('');
   const navigate = useNavigate();
   const cloud = useCloud();
   const hydrated = useHydrated();
@@ -51,11 +52,13 @@ function Login() {
 
   async function signIn(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setBusy(true);setError('');
+    setError('');setPhoneError('');
+    if (destination === 'gym' && !phone.trim()) {setPhoneError('Enter your phone number — it is required for Gym Account sign in.');return;}
+    setBusy(true);
     try {
       // Preview credentials never enter the real authentication flow.
       if (prototypePreviewEnabled()) {
-        const contact = destination === 'gym' ? phone.trim() || email.trim() : email.trim();
+        const contact = destination === 'gym' ? phone.trim() : email.trim();
         const session = await createStablePreviewSession(destination,name,contact,password,true);
         await router.options.context.queryClient.cancelQueries();
         router.options.context.queryClient.clear();
@@ -113,10 +116,10 @@ function Login() {
           <form className="mt-6 space-y-4" onSubmit={signIn} noValidate>
             <div className="space-y-2"><Label htmlFor="demo-name">Name</Label><Input id="demo-name" name="name" value={name} onChange={e => setName(e.target.value)} autoComplete="name" className="h-11 bg-card" /></div>
             <div className="space-y-2">
-              <Label htmlFor="demo-email">{destination === 'gym' ? 'Email' : 'Email or phone'}</Label>
+              <Label htmlFor="demo-email">{destination === 'gym' ? 'Email (optional)' : 'Email or phone'}</Label>
               <Input id="demo-email" name="identifier" type="text" value={email} onChange={e => setEmail(e.target.value)} autoComplete="username" placeholder={destination === 'gym' ? 'Email address' : 'Email or phone with country code'} className="h-11 bg-card" />
             </div>
-            {destination === 'gym' && <div className="space-y-2"><Label htmlFor="demo-phone">Phone number</Label><Input id="demo-phone" name="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" placeholder="Phone number with country code" className="h-11 bg-card" /></div>}
+            {destination === 'gym' && <div className="space-y-2"><Label htmlFor="demo-phone">Phone number *</Label><Input id="demo-phone" name="phone" type="tel" value={phone} onChange={e => {setPhone(e.target.value);setPhoneError('');}} autoComplete="tel" placeholder="Phone number with country code" className="h-11 bg-card" required aria-invalid={!!phoneError} aria-describedby={phoneError ? 'demo-phone-error' : undefined} />{phoneError && <p id="demo-phone-error" role="alert" className="text-sm text-destructive">{phoneError}</p>}</div>}
             <div className="space-y-2">
               <Label htmlFor="demo-password">Password</Label>
               <Input id="demo-password" name="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" type="password" placeholder="••••••••" className="h-11 bg-card" />

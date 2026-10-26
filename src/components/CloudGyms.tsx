@@ -13,7 +13,7 @@ import { MessageSquare } from 'lucide-react';
 import { AdminNoteCell } from './AdminNoteCell';
 import { gymPrices } from '@/lib/platform-subscriptions';
 import { egp } from '@/lib/mock';
-import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth, approvedGymTotals } from '@/lib/approved-gym-columns';
+import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth, approvedGymTotals, formatGymDate } from '@/lib/approved-gym-columns';
 
 type AdminGym = Awaited<ReturnType<typeof listAdminGyms>>[number];
 
@@ -94,7 +94,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
         <span className="text-muted-foreground">Total annual price: <span className="font-semibold tabular-nums text-foreground">{egp(totals.annualPrice)}</span></span>
       </div>}
       {error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
-      {!loaded ? <TableSkeleton cols={deleted ? 7 : 10} /> : <><DataTable head={deleted ? deletedHead : approvedGymColumns} widths={deleted ? undefined : approvedGymColumnWidths} minWidth={deleted ? 640 : approvedGymTableMinWidth}>
+      {!loaded ? <TableSkeleton cols={deleted ? 7 : 12} /> : <><DataTable head={deleted ? deletedHead : approvedGymColumns} widths={deleted ? undefined : approvedGymColumnWidths} minWidth={deleted ? 640 : approvedGymTableMinWidth}>
         {visibleRows.map((g, i) => {
           const prices = gymPrices({ plan: g.plan });
           return (
@@ -114,6 +114,8 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
               <td className={`${td} whitespace-nowrap`}>{g.plan || '—'}</td>
               <td className={`${td} whitespace-nowrap tabular-nums`}>{prices.monthlyPrice > 0 ? egp(prices.monthlyPrice) : '—'}</td>
               <td className={`${td} whitespace-nowrap tabular-nums`}>{prices.annualPrice > 0 ? egp(prices.annualPrice) : '—'}</td>
+              <td className={`${td} whitespace-nowrap tabular-nums`}>{formatGymDate(g.subscriptionStart)}</td>
+              <td className={`${td} whitespace-nowrap tabular-nums`}>{formatGymDate(g.subscriptionEnd)}</td>
               <td className={`${td} whitespace-nowrap`}><span className={g.frozen ? 'text-destructive' : 'text-success'}>{g.frozen ? 'Frozen' : 'Active'}</span></td>
               <td className={td}><AdminNoteCell gymName={g.name} note={g.adminNote} onSave={async note=>{await saveNote({data:{gymId:g.id,note}});await load();}} /></td>
               <td className={`${td} min-w-[19rem]`}><div className="flex flex-nowrap gap-2">

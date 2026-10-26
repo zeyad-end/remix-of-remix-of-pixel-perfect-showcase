@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CountUp } from "./CountUp";
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: ReactNode }) {
   return (
@@ -37,7 +38,7 @@ export function StatCard({ label, value, icon: Icon, delta, tone = "default" }: 
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <div className="mt-4 font-display text-2xl font-semibold">{value}</div>
+      <div className="mt-4 font-display text-2xl font-semibold tabular-nums"><CountUp value={value} /></div>
       {delta && (
         <div className={cn("mt-1 text-xs", tone === "good" && "text-success", tone === "bad" && "text-destructive", tone === "default" && "text-muted-foreground")}>{delta}</div>
       )}
@@ -52,7 +53,7 @@ export function StatusPill({ status }: { status: string }) {
       : status === "Expiring" || status === "Low stock"
         ? "bg-warning/15 text-warning"
         : "bg-destructive/15 text-destructive";
-  return <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", tone)}><span className="h-1.5 w-1.5 rounded-full bg-current" />{status}</span>;
+  return <span key={status} className={cn("status-pop inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", tone)}><span className="h-1.5 w-1.5 rounded-full bg-current" />{status}</span>;
 }
 
 export function Avatar({ initials, size = "md" }: { initials: string; size?: "sm" | "md" | "lg" }) {

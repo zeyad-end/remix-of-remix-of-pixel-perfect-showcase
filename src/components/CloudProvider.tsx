@@ -242,7 +242,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       }
       hydrateState(base);
       setProfile({id,full_name:'Prototype reviewer',email:'reviewer@example.test',phone:'',photo:'',account_type:type === 'gym' ? 'owner' : 'client',gyvora_id:type === 'gym' ? SAMPLE_GYM_ID : type === 'individual' ? SAMPLE_CLIENT_ID : null} as Profile);
-      setGyms(type === 'dashboard' ? [] : [{id:workspaceId,name:base.gym.name,owner_id:id,created_at:'',frozen_at:null,freeze_note:'',deleted_at:null,deletion_note:'',deletion_history:[],gyvora_id:SAMPLE_GYM_ID}]);
+      setGyms(type === 'dashboard' ? [] : [{id:workspaceId,name:base.gym.name,owner_id:id,created_at:'',frozen_at:null,freeze_note:'',deleted_at:null,deletion_note:'',deletion_history:[],admin_note:'',gyvora_id:SAMPLE_GYM_ID}]);
       setGymId(type === 'gym' ? workspaceId : '');
       if (type === 'gym') bindPersistence(async changes => {
         resetPrototypeData();

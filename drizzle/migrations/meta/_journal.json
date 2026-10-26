@@ -29,6 +29,13 @@
       "when": 1793031205933,
       "tag": "0003_client_gym_content_coords",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793034575883,
+      "tag": "0004_gym_admin_note",
+      "breakpoints": true
     }
   ]
 }

@@ -344,8 +344,8 @@ export function lookupDemoClient(gymId:string,value:string) {
   if(matches.length>1)throw new Error('More than one account has this name. Use the intended GYVORA ID or email.');
   const p=matches[0];
   if(!p)throw new Error('No existing Local demo client found on this browser. Saved accounts require your signed-in gym owner session.');
+  // Prototype identities stay browser-local; a reserved permanent ID is optional display data.
   const id=demoMemberId(p.id);
-  if(!id)throw new Error('Permanent demo ID is not ready. Refresh your account while online and try again.');
   return {...p,member_id:id,gyvora_id:id};
 }
 export type DemoMembershipHistory = {

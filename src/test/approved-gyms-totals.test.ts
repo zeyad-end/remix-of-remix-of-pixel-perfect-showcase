@@ -3,7 +3,7 @@ import { approvedGymColumns, approvedGymTotals } from '@/lib/approved-gym-column
 
 describe('Approved Gyms numbering and price totals', () => {
   it('keeps # as the first column followed by the required order', () => {
-    expect(approvedGymColumns).toEqual(['#', 'Gym Name', 'Email', 'Contact', 'Plan', 'Monthly Price', 'Annual Price', 'Status', 'Actions']);
+    expect(approvedGymColumns).toEqual(['#', 'Gym Name', 'Email', 'Contact', 'Plan', 'Monthly Price', 'Annual Price', 'Status', 'Notes', 'Actions']);
   });
 
   it('sums monthly and annual prices across listed gyms, treating missing prices as zero', () => {

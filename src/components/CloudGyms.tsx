@@ -80,7 +80,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
     <div>
       <PageHeader title={deleted ? "Deleted Gyms" : "Approved Gyms"} subtitle={`Total ${deleted ? "deleted" : "approved"} gyms: ${visibleRows.length}`} />
       {error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
-      {!loaded ? <TableSkeleton cols={6} /> : <><DataTable head={deleted ? ['#','Gym Name','Owner','Deletion date','Notes / Reason','Actions'] : ['#', 'Gym Name', 'Actions', 'Owner', 'Plan', 'Status', 'Freeze note']}>
+      {!loaded ? <TableSkeleton cols={7} /> : <><DataTable head={deleted ? ['#','Gym Name','Owner','Contact','Deletion date','Notes / Reason','Actions'] : ['#', 'Gym Name', 'Actions', 'Owner', 'Contact', 'Plan', 'Status', 'Freeze note']}>
         {visibleRows.map((g, i) => (
           <tr key={g.id}>
             <td className={td}>{i + 1}</td>

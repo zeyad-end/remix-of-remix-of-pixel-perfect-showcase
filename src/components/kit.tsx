@@ -88,3 +88,22 @@ export function Field({ label, children, className }: { label: string; children:
     </label>
   );
 }
+
+/** Placeholder rows shown while a table's saved data loads (same pulse as gallery photos). */
+export function TableSkeleton({ rows = 4, cols = 4 }: { rows?: number; cols?: number }) {
+  return (
+    <div role="status" aria-label="Loading" className="panel space-y-3 p-5">
+      {Array.from({ length: rows }, (_, r) => (
+        <div key={r} className="grid gap-4" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+          {Array.from({ length: cols }, (_, c) => <div key={c} className="h-4 animate-pulse rounded bg-secondary" />)}
+        </div>
+      ))}
+      <span className="sr-only">Loading…</span>
+    </div>
+  );
+}
+
+/** Chart-shaped placeholder for charts whose data is still loading. */
+export function ChartSkeleton({ className = "h-52" }: { className?: string }) {
+  return <div role="status" aria-label="Loading chart" className={cn(className, "flex items-end gap-2 rounded-lg bg-secondary/40 p-4")}>{[40, 65, 50, 80, 55, 70, 45].map((h, i) => <div key={i} className="flex-1 animate-pulse rounded-t bg-secondary" style={{ height: `${h}%` }} />)}</div>;
+}

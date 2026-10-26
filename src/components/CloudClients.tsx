@@ -29,7 +29,7 @@ export function CloudClients({gymId}: {gymId?: string}) {
   return <div className="space-y-4">
     <PageHeader title={gymId ? 'Client accounts' : 'Clients'} subtitle={loading ? 'Loading clients…' : `${rows.length} saved client accounts`} />
     {error && <p role="alert" className="text-destructive">{error}<Button variant="outline" className="ml-3" onClick={()=>void refresh()}>Retry</Button></p>}
-    <DataTable head={['Client','GYVORA ID','Registered contact','Gyms','Status','Actions']}>{rows.map(p=><tr key={p.id}>
+    {loading && !rows.length ? <TableSkeleton cols={6} /> : <DataTable head={['Client','GYVORA ID','Registered contact','Gyms','Status','Actions']}>{rows.map(p=><tr key={p.id}>
       <td className={td}><div className="flex items-center gap-3">{p.photo ? <ExerciseImage path={p.photo} alt={`${p.full_name} photo`} className="h-10 w-10 rounded-full object-cover"/> : <Avatar initials={initials(p.full_name || 'Client')}/>}<span>{p.full_name || 'Name not provided'}</span></div></td>
       <td className={td}><span className="break-all">{p.gyvora_id || 'Unavailable'}</span></td>
       <td className={td}><p className="break-all">{p.email || 'Email not provided'}</p><p className="text-xs text-muted-foreground">{p.phone || 'Phone not provided'}</p></td>
@@ -43,7 +43,7 @@ export function CloudClients({gymId}: {gymId?: string}) {
           : <Button size="sm" variant="secondary" disabled={!!p.disabled_at} onClick={()=>{setFreezing(p);setFreezeNote('');setFreezeMessage('');}}>Freeze</Button>}
         <Button size="sm" variant="destructive" onClick={()=>setDeleting(p)}>{p.disabled_at ? 'Retry Delete' : 'Delete'}</Button>
       </div></td>
-    </tr>)}</DataTable>
+    </tr>)}</DataTable>}
     {!loading && !error && !rows.length && <p className="py-6 text-muted-foreground">No clients.</p>}
     <Dialog open={!!editing} onOpenChange={v=>{if(!busy&&!v)setEditing(null);}}><DialogContent><DialogHeader><DialogTitle>Edit client</DialogTitle></DialogHeader><div className="space-y-4">
       <Field label="Full name"><Input value={details.name} onChange={e=>setDetails(d=>({...d,name:e.target.value}))} maxLength={100}/></Field>

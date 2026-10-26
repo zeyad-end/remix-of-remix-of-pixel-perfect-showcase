@@ -339,12 +339,13 @@ export function lookupDemoClient(gymId:string,value:string) {
     if(!sample)throw new Error('No sample client account found on this browser. Sign in as a Client first.');
     return {...sample,member_id:SAMPLE_CLIENT_ID,gyvora_id:SAMPLE_CLIENT_ID};
   }
-  const matches=localClients().filter(p=>p.id.toLowerCase()===input||demoIdentityMatches('C',p.id,input)||legacy[p.id]?.toLowerCase()===input||(p.email&&p.email.toLowerCase()===input)||p.full_name.toLowerCase()===input);
+  const digits=input.replace(/\D/g,'');
+  const matches=localClients().filter(p=>p.id.toLowerCase()===input||demoIdentityMatches('C',p.id,input)||legacy[p.id]?.toLowerCase()===input||(p.email&&p.email.toLowerCase()===input)||p.full_name.toLowerCase()===input||(digits.length>=6&&p.phone.replace(/\D/g,'')===digits));
   if(matches.length>1)throw new Error('More than one account has this name. Use the intended GYVORA ID or email.');
   const p=matches[0];
   if(!p)throw new Error('No existing Local demo client found on this browser. Saved accounts require your signed-in gym owner session.');
+  // Prototype identities stay browser-local; a reserved permanent ID is optional display data.
   const id=demoMemberId(p.id);
-  if(!id)throw new Error('Permanent demo ID is not ready. Refresh your account while online and try again.');
   return {...p,member_id:id,gyvora_id:id};
 }
 export type DemoMembershipHistory = {
@@ -694,20 +695,26 @@ export function createDemoInvitation(
   name: string,
   email: string,
   role: "Admin" | "Reception" | "Trainer",
+  options?: { userId?: string; permissions?: string[] },
 ) {
-  const normalized = z.string().trim().email().max(255).parse(email).toLowerCase();
+  const normalized = email.trim()
+    ? z.string().trim().email().max(255).parse(email).toLowerCase()
+    : "";
   const fullName = z.string().trim().min(1).max(100).parse(name);
+  const userId = options?.userId ?? null;
+  if (!normalized && !userId)
+    throw new Error("Resolve an existing client account before sending the invitation");
   if (
     demoState.invitations.some(
       (i) =>
         i.gym_id === gymId &&
-        i.email === normalized &&
         i.role === role &&
-        invitationStatus(i.status, i.expires_at) === "Pending",
+        invitationStatus(i.status, i.expires_at) === "Pending" &&
+        ((normalized && i.email === normalized) || (userId && i.invited_user_id === userId)),
     )
   )
     throw new Error(
-      "An active invitation already exists for this email and role. Resend it from Invitations.",
+      "An active invitation already exists for this client and role. Resend it from Invitations.",
     );
   const row: DemoInvitation = {
     id: generateId(),
@@ -720,13 +727,14 @@ export function createDemoInvitation(
     created_at: new Date().toISOString(),
     expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
     accepted_by: null,
-    invited_user_id: null,
+    invited_user_id: userId,
     permissions:
-      role === "Admin"
+      options?.permissions ??
+      (role === "Admin"
         ? ["Members", "Attendance", "Sessions", "Payments", "Finance", "Workout programs"]
         : role === "Reception"
           ? ["Members", "Attendance", "Sessions", "Payments"]
-          : ["Members", "Workout programs"],
+          : ["Members", "Workout programs"]),
   };
   commit({ ...demoState, invitations: [row, ...demoState.invitations] });
   return row;
@@ -756,22 +764,32 @@ export function changeDemoInvitation(gymId: string, id: string, action: "resend"
   });
 }
 
+/** All local client account IDs that belong to the current individual session. */
+function sessionClientIds(email: string): Set<string> {
+  const ids = new Set<string>();
+  const normalized = email.trim().toLowerCase();
+  if (normalized) ids.add(demoUserId(normalized));
+  const preview = readPreviewSession();
+  if (preview?.type === "individual") ids.add(preview.id);
+  for (const c of localClients()) if (normalized && c.email.toLowerCase() === normalized) ids.add(c.id);
+  return ids;
+}
 export function pendingDemoInvitations(email: string, rows = demoState.invitations) {
   const normalized = email.trim().toLowerCase();
-  return normalized
-    ? rows.filter(
-        (i) =>
-          i.email.toLowerCase() === normalized &&
-          invitationStatus(i.status, i.expires_at) === "Pending",
-      )
-    : [];
+  const ids = sessionClientIds(email);
+  return rows.filter(
+    (i) =>
+      invitationStatus(i.status, i.expires_at) === "Pending" &&
+      ((normalized && i.email.toLowerCase() === normalized) ||
+        (i.invited_user_id !== null && ids.has(i.invited_user_id))),
+  );
 }
 export function respondDemoInvitation(id: string, accept: boolean) {
   const info = getDemoSessionInfo();
   if (!info || info.kind !== "individual") throw new Error("Open your member account to respond");
   const row = pendingDemoInvitations(info.email).find((i) => i.id === id);
   if (!row) throw new Error("Invitation unavailable for this account");
-  const userId = demoUserId(info.email);
+  const userId = row.invited_user_id ?? demoUserId(info.email);
   const role: DemoStaffRole = {
     id: row.id,
     userId,

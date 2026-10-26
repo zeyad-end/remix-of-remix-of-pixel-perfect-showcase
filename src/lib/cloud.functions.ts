@@ -39,8 +39,9 @@ export const lookupClient = createServerFn({method:'POST'}).middleware([requireL
     query=query.eq('id',reservation.account_id);
   }
   else if(z.string().uuid().safeParse(value).success)query=query.or(`id.eq.${value},member_id.eq.${value}`);
-  else if(z.string().email().safeParse(value).success)query=query.ilike('email',value.replace(/[%_]/g,'\\$&'));
-  else query=query.ilike('full_name',value.replace(/[%_]/g,'\\$&'));
+   else if(z.string().email().safeParse(value).success)query=query.ilike('email',value.replace(/[%_]/g,'\\$&'));
+   else if(/^\+?[0-9 ()-]{6,30}$/.test(value))query=query.eq('phone',value);
+   else query=query.ilike('full_name',value.replace(/[%_]/g,'\\$&'));
   const {data:matches,error}=await query.limit(20);
   if(error)throw new Error('Client lookup failed. Please try again.');
   if((matches?.length??0)>1)throw new Error('More than one account has this name. Use the intended user ID, QR code or email.');

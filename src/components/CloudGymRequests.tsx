@@ -4,7 +4,7 @@ import type {Database} from '@/integrations/supabase/types';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from './ui/dialog';
-import {DataTable,PageHeader,td} from './kit';
+import {DataTable,PageHeader,TableSkeleton,td} from './kit';
 import {toast} from 'sonner';
 
 type AdminRequest=Database['public']['Functions']['admin_request_list']['Returns'][number] & {phone?:string;note?:string};
@@ -13,10 +13,10 @@ const titles={reject:'Reject request',delete:'Delete request (rejects and blocks
 
 export function CloudGymRequests(){
  const [rows,setRows]=useState<AdminRequest[]>([]);
- const [error,setError]=useState('');const [busy,setBusy]=useState(false);
+ const [error,setError]=useState('');const [loaded,setLoaded]=useState(false);const [busy,setBusy]=useState(false);
  const [pending,setPending]=useState<Pending|null>(null);const [note,setNote]=useState('');
  async function load(){const [{data,error},{data:contacts,error:contactError}]=await Promise.all([supabase.rpc('admin_request_list'),supabase.from('owner_requests').select('id,phone,decision_note')]);if(error||contactError)setError('Could not load gym requests. Please reload.');else {setRows((data??[]).map(r=>{const c=contacts?.find(c=>c.id===r.id);return {...r,phone:c?.phone??'',note:c?.decision_note??''};}));setError('');}}
- useEffect(()=>{void load();},[]);
+ useEffect(()=>{void load().finally(()=>setLoaded(true));},[]);
  async function review(id:string,approve:boolean,reason=''){
   setBusy(true);setError('');
   try {const {error}=await supabase.rpc('review_owner_request',{request_id:id,approve,note:reason.trim()});if(error)throw error;toast.success(approve?'Gym approved — subscription active, no payment collected':'Request rejected — the gym is blocked from its dashboard');setPending(null);setNote('');await load();}

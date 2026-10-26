@@ -4,7 +4,7 @@ import { listClients, updateClient, deleteClientAccount } from '@/lib/clients.fu
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
-import { Avatar, DataTable, Field, PageHeader, td } from './kit';
+import { Avatar, DataTable, Field, PageHeader, TableSkeleton, td } from './kit';
 import { ExerciseImage } from './ProgramEditor';
 import { initials } from '@/lib/mock';
 import { uploadImage } from '@/lib/images';

@@ -87,3 +87,10 @@ export const setGymAdminNote=createServerFn({method:'POST'}).middleware([require
   if(error)throw new Error('Could not save note.');
   return {ok:true};
 });
+
+export const setGymDeletionNote=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator(input=>z.object({gymId:z.string().uuid(),note:z.string().trim().max(1000)}).strict().parse(input)).handler(async({data,context})=>{
+  const {data:allowed}=await context.supabase.rpc('is_super_admin');if(!allowed)throw new Error('Administrator access required');
+  const {error}=await context.supabase.rpc('set_gym_deletion_note' as never,{g:data.gymId,note:data.note} as never);
+  if(error)throw new Error('Could not save deletion reason.');
+  return {ok:true};
+});

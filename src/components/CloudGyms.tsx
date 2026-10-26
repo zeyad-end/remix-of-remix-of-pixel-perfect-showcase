@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
-import { listAdminGyms, setGymFrozen, changeGymDeletion, editAdminGym, setGymAdminNote } from '@/lib/platform-admin.functions';
+import { listAdminGyms, setGymFrozen, changeGymDeletion, editAdminGym, setGymAdminNote, setGymDeletionNote } from '@/lib/platform-admin.functions';
 import { Input } from './ui/input';
 import { Field } from './kit';
 import { Button } from './ui/button';
@@ -25,6 +25,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
   const remove = useServerFn(changeGymDeletion);
   const saveGym = useServerFn(editAdminGym);
   const saveNote = useServerFn(setGymAdminNote);
+  const saveDeletionNote = useServerFn(setGymDeletionNote);
   const [editing,setEditing]=useState<AdminGym|null>(null);
   const [gymName,setGymName]=useState('');
   const [rows, setRows] = useState<AdminGym[]>([]);
@@ -103,7 +104,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
               <td className={td}>{g.name}</td>
               <td className={td}>{g.ownerName || '—'}<span className="block text-xs text-muted-foreground">Email: {g.ownerEmail || 'Not provided'}</span></td><td className={td}>{g.ownerPhone || 'Not provided'}</td>
               <td className={td}>{g.deletedAt ? new Date(g.deletedAt).toLocaleString() : '—'}</td>
-              <td className={`${td} max-w-sm whitespace-pre-wrap break-words`}>{g.deletionNote || '—'}</td>
+              <td className={td}><AdminNoteCell gymName={g.name} note={g.deletionNote || ''} title="Deletion reason" description="Reason this gym was deleted. Separate from freeze notes and request rejection notes." emptyText="–" saveLabel="Save" onSave={async note=>{await saveDeletionNote({data:{gymId:g.id,note}});await load();}} /></td>
               <td className={td}><Button size="sm" variant="outline" disabled={busy} onClick={()=>setRestoring(g)}>Edit / Restore</Button></td>
             </> : <>
               <td className={`${td} tabular-nums`}>{i + 1}</td>

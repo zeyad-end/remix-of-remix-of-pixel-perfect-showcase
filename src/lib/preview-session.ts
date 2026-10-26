@@ -26,7 +26,7 @@ export function createPreviewSession(type: string, name: string, identifier: str
 export async function createStablePreviewSession(type: PreviewAccountType, name: string, identifier: string, password: string, enabled: boolean) {
   const session = createPreviewSession(type, name, identifier, password, enabled);
   const scenarioKey = await prototypeContactKey(identifier);
-  return {...session, id: `preview-${type}-${scenarioKey}`, scenarioKey, ...(type === 'gym' ? {contact: identifier.trim().slice(0, 40)} : {})};
+  return {...session, id: `preview-${type}-${scenarioKey}`, scenarioKey, ...(type !== 'dashboard' ? {contact: identifier.trim().slice(0, 40)} : {})};
 }
 
 export function readPreviewSession(): PreviewSession | null {

@@ -15,7 +15,7 @@ import { localDate } from '@/lib/gym-period';
 import { isClientPortalPath } from '@/lib/membership-link';
 import { getOwnerGate } from '@/lib/owner-gate.functions';
 import { trialActive, trialExpired, trialRemainingMs, formatRemaining, type OwnerGate } from '@/lib/trial';
-import { whatsappLink } from '@/lib/demo';
+import { whatsappLink, rememberDemoClient } from '@/lib/demo';
 import { MessageCircle } from 'lucide-react';
 import { DemoOwnerGate } from './DemoOwnerGate';
 import { PrototypeGymTrialBoundary } from './PrototypeGymTrialBoundary';
@@ -237,6 +237,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
       if (approvedGym) base.gym.name = approvedGym.name;
       if (type === 'individual') {
         base.members = base.members.slice(0, 1).map(m => ({...m, clientId: id}));
+        const contact = prototype.contact ?? '';
+        rememberDemoClient(id, prototype.name, contact.includes('@') ? contact.toLowerCase() : '', contact.includes('@') ? '' : contact);
         prototypeStorage().setItem('ironhaus-demo-gym:demo-gym', JSON.stringify(base));
         if (!prototypeStorage().getItem(`ironhaus-client-links:${id}`)) prototypeStorage().setItem(`ironhaus-client-links:${id}`, JSON.stringify([{gymId:'demo-gym',favorite:false}]));
       }

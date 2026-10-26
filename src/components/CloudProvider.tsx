@@ -251,7 +251,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         const currentGym = getDemoState().gyms.find(g => g.email === prototype.scenarioKey);
         if (currentGym?.deletedAt || currentGym?.status === 'Frozen' || readSampleRequest()?.status === 'Rejected') throw new Error('This prototype gym is suspended.');
         const next = {...getState(), ...changes};
-        prototypeStorage().setItem(`ironhaus-demo-gym:${workspaceId}`, JSON.stringify(next));
+        writeDemoGym(workspaceId, next);
         hydrateState(next);
       });
       setRole(type === 'dashboard' ? 'super_admin' : type === 'gym' ? 'Owner' : 'Client');

@@ -171,6 +171,14 @@ tbody tr:hover { background-color: color-mix(in oklab, var(--foreground) 4%, tra
   animation: gy-scan 2.2s ease-in-out infinite alternate;
 }
 
+
+/* Confirmation feedback (after a save has actually completed) */
+@keyframes gy-check { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: none; } }
+@keyframes gy-reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.toast-icon, .confirm-check { animation: gy-check 320ms var(--ease-out-soft) both; }
+.confirm-reveal { animation: gy-reveal var(--motion-base) var(--ease-out-soft) both; }
+.saved-flash { animation: gy-pop var(--motion-base) var(--ease-out-soft) both; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
   .qr-scan-frame::after { display: none; }

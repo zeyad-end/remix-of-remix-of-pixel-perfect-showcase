@@ -854,6 +854,10 @@ export type Database = {
         Args: { g?: string; target: string }
         Returns: boolean
       }
+      mark_account_messages_read: {
+        Args: { ids: string[] }
+        Returns: undefined
+      }
       my_staff_invitations: { Args: never; Returns: Json }
       otp_verified: { Args: never; Returns: boolean }
       owner_gate_state: { Args: never; Returns: Json }

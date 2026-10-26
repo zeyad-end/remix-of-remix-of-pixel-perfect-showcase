@@ -8,7 +8,6 @@ import { Panel } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 /** Renders a saved gallery photo (storage path or URL); skeleton while loading, notice if unavailable. */
 export function GalleryImage({ path, className = "aspect-[4/3] w-full rounded-lg object-cover" }: { path: string; className?: string }) {
@@ -88,20 +87,20 @@ export function GymGalleryManager({ editable }: { editable: boolean }) {
         </div>
       ) : <p className="text-sm text-muted-foreground">No photos yet.{editable ? " Use Add Photo to show your gym to clients." : ""}</p>}
       <PhotoDialog photo={editing} onClose={() => setEditing(null)} />
-      <AlertDialog open={!!removing} onOpenChange={o => { if (!o) setRemoving(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Delete this photo?</AlertDialogTitle><AlertDialogDescription>It will be removed from your gallery and clients will no longer see it.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={async () => {
+      <Dialog open={!!removing} onOpenChange={o => { if (!o) setRemoving(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Delete this photo?</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">It will be removed from your gallery and clients will no longer see it.</p>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setRemoving(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={async () => {
               if (!removing || busy.current) return; busy.current = true;
               try { await savePhotos(getState().gym.gallery.map(toPhoto).filter(x => x.id !== removing.id)); toast.success("Photo deleted"); }
               catch (err) { toast.error(err instanceof Error ? `Not deleted: ${err.message}` : "Not deleted"); }
               finally { busy.current = false; setRemoving(null); }
-            }}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            }}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Panel>
   );
 }

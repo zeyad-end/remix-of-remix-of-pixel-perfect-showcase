@@ -14,7 +14,7 @@ import { useCloud } from '@/components/CloudProvider';
 import { canChange } from '@/lib/gym-permissions';
 import { readPreviewSession } from '@/lib/preview-session';
 import { SampleAccountQR } from '@/components/SampleAccountQR';
-import { GalleryImage } from '@/components/GymGallery';
+import { GymGalleryManager } from '@/components/GymGallery';
 
 export const Route = createFileRoute("/_gym/gym")({
   head: () => seo("Gym profile", "Manage your gym's public profile, plans, trainers and gallery."),
@@ -107,14 +107,7 @@ function GymProfile() {
       </Panel>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Panel title="Gallery" className="lg:col-span-2">
-          <div className="grid grid-cols-3 gap-3">
-            <img src={g1} alt="Free weights" loading="lazy" width={944} height={704} className="col-span-2 row-span-2 h-full w-full rounded-lg object-cover" />
-            <img src={g2} alt="Cardio zone" loading="lazy" width={944} height={704} className="aspect-[4/3] w-full rounded-lg object-cover" />
-            <img src={cover} alt="Main floor" loading="lazy" width={1600} height={640} className="aspect-[4/3] w-full rounded-lg object-cover" />
-            {gym.gallery.map((src, i) => <GalleryImage key={src + i} path={src} />)}
-          </div>
-        </Panel>
+        <GymGalleryManager editable={canChange(c.role,c.permissions,'Profile','edit')} />
         <div className="space-y-6">
           <Panel title="Location">
             <div className="grid h-32 place-items-center rounded-lg bg-secondary text-xs text-muted-foreground"><MapPin className="h-6 w-6 text-primary" /></div>

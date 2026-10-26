@@ -106,7 +106,7 @@ const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 export type Gym = typeof gymSeed & {
   logo: string;
   cover: string;
-  gallery: string[];
+  gallery: GalleryItem[];
   hoursByDay: DayHours[];
   preferences?: GymPreferences;
 };
@@ -232,3 +232,8 @@ export function currencyOf(g: Partial<Gym> | undefined = state.gym): Currency {
 }
 export const money = (n: number, c: Currency = currencyOf()) => `${c} ${Math.abs(n).toLocaleString("en-US")}`;
 export function useCurrency() { return useStore((s) => currencyOf(s.gym)); }
+
+/** Gallery entries: legacy plain paths or captioned photos saved in the gym record. */
+export type GalleryPhoto = { id: string; path: string; caption: string };
+export type GalleryItem = string | GalleryPhoto;
+export const toPhoto = (g: GalleryItem, i: number): GalleryPhoto => typeof g === 'string' ? { id: `legacy-${i}-${g.slice(-24)}`, path: g, caption: '' } : { id: g.id, path: g.path, caption: g.caption ?? '' };

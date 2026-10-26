@@ -35,6 +35,9 @@ export function MemberDialog({ open, onOpenChange, member: initialMember, renew:
   useEffect(()=>{if(open){setMember(initialMember);setRenew(initialRenew);setDuplicate(null);}},[open,initialMember,initialRenew]);
   const c=useCloud();const lookup=useServerFn(lookupClient);const [scan,setScan]=useState(false);const [memberId,setMemberId]=useState("");const [clientId,setClientId]=useState<string|undefined>();const [lookupBusy,setLookupBusy]=useState(false);const [busy,setBusy]=useState(false);const [error,setError]=useState('');
   const [legacyQrId,setLegacyQrId]=useState<string>();
+  const [mode,setMode]=useState<'registered'|'manual'>('registered');
+  useEffect(()=>{if(open)setMode('registered');},[open]);
+  function switchMode(m:'registered'|'manual'){setMode(m);setClientId(undefined);setLegacyQrId(undefined);setMemberId('');setDuplicate(null);setError('');up({name:'',email:'',phone:''});}
   async function findClient(value:string, fromCamera=false){const id=value.trim().replace(/^ironhaus:member:/,"");if(!id){toast.error("Enter a GYVORA ID, name, QR code or email");return false;}setLookupBusy(true);setClientId(undefined);setDuplicate(null);setError('');try{const p=getDemoSession()?lookupDemoClient(c.gymId,id):await lookup({data:{gymId:c.gymId,memberId:id}});const existing=getState().members.find(m=>m.clientId===p.id&&m.id!==member?.id);if(existing){setDuplicate(existing);setScan(false);setError('This client already has a membership at this gym. Edit their existing membership instead.');return false;}up({name:p.full_name,email:p.email,phone:p.phone});setClientId(p.id);setLegacyQrId(p.member_id);setMemberId(p.gyvora_id??p.member_id);toast.success("Client found. Confirm their details before saving.");return true;}catch(e){if(fromCamera)throw e;toast.error(e instanceof Error?e.message:"Client not found");return false;}finally{setLookupBusy(false);}}
   const plans = useStore((s) => s.plans);
   const trainers = useStore((s) => s.trainers);
@@ -60,16 +63,19 @@ export function MemberDialog({ open, onOpenChange, member: initialMember, renew:
     if (f.expiry < f.start) { toast.error("End date must be after start date"); return; }
     setBusy(true);setError('');
     try {
-    if(!c.gymId.startsWith('demo-')&&!clientId)throw new Error('Look up and confirm an existing user before saving their membership.');
-    if (!member || clientId !== member.clientId) {
-      const existing=getState().members.find(m=>m.clientId===clientId&&m.id!==member?.id);
-      if(existing&&clientId)setDuplicate(existing);
-      assertUniqueClientMembership(getState().members,clientId,member?.id);
+    if(!member&&mode==='registered'&&!clientId)throw new Error('Look up and confirm an existing user before saving their membership.');
+    if(!f.name.trim())throw new Error('Client name is required.');
+    const linkId = mode==='manual' && !member ? undefined : clientId;
+    if (linkId && (!member || linkId !== member.clientId)) {
+      const existing=getState().members.find(m=>m.clientId===linkId&&m.id!==member?.id);
+      if(existing)setDuplicate(existing);
+      assertUniqueClientMembership(getState().members,linkId,member?.id);
     }
     if(member&&!getState().members.some(m=>m.id===member.id))throw new Error('This membership is no longer available. Refresh the Members page.');
     const total = f.type === "Limited" ? Math.max(1, Math.floor(f.sessionsTotal)) : 0;
     const subscription = !member || renew ? { subscriptionEventId: generateId(), planPrice: plans.find(p => p.name === f.plan)?.price ?? 0 } : {};
-    const base = { ...f, email: membershipEmailSchema.parse(f.email) ?? '', ...(clientId?{clientId,memberQrId:legacyQrId||member?.memberQrId,...(isGyvoraId(memberId)?{gyvoraId:memberId}:{})}:{}), sessionsTotal: total, initials: initials(f.name), status: statusFor(f.expiry), remaining: Math.max(0, Math.ceil((new Date(f.expiry).getTime() - Date.now()) / 86400000)) };
+    const source: Member['source'] = linkId ? 'registered' : 'manual';
+    const base = { ...f, email: membershipEmailSchema.parse(f.email) ?? '', source, ...(linkId?{clientId:linkId,memberQrId:legacyQrId||member?.memberQrId,...(isGyvoraId(memberId)?{gyvoraId:memberId}:{})}:{}), sessionsTotal: total, initials: initials(f.name), status: statusFor(f.expiry), remaining: Math.max(0, Math.ceil((new Date(f.expiry).getTime() - Date.now()) / 86400000)) };
     if (member) {
       const left = renew ? total : (f.type === "Limited" ? (member.type === "Limited" ? Math.min(member.sessionsLeft + (total - member.sessionsTotal), total) : total) : 0);
       const updated = { ...member, ...base, ...subscription, sessionsLeft: Math.max(0, left) };
@@ -98,7 +104,16 @@ export function MemberDialog({ open, onOpenChange, member: initialMember, renew:
         <DialogHeader><DialogTitle>{renew ? "Renew membership" : member ? "Edit member" : "Add member"}</DialogTitle></DialogHeader>
         <QRScanner open={scan} onClose={()=>setScan(false)} onScan={v=>findClient(v,true)}/>
         <form onSubmit={save} className="grid gap-4 sm:grid-cols-2">
-          {!member&&<div className="space-y-3 border-b pb-4 sm:col-span-2"><Button type="button" variant="secondary" onClick={()=>setScan(true)}>Scan Member QR</Button><Field label="GYVORA ID, name, QR code or email"><div className="flex gap-2"><Input aria-label="GYVORA ID, name, QR code or email" value={memberId} onChange={e=>{setMemberId(e.target.value);setClientId(undefined);}}/><Button type="button" disabled={lookupBusy||busy} onClick={()=>void findClient(memberId)}>{lookupBusy?"Finding…":"Look up"}</Button></div></Field><Button type="button" variant="link" className="px-0" onClick={()=>{setClientId(undefined);setMemberId("");up({name:"",email:"",phone:""});}}>Manual entry</Button>{clientId&&<p className="break-words text-sm text-success">Confirm existing client · {f.name} · {f.email||'Email not provided'} · {f.phone||'Phone not provided'} · {memberId}</p>}</div>}
+          {!member&&<div className="space-y-3 border-b pb-4 sm:col-span-2">
+            <div role="tablist" aria-label="Membership type" className="flex gap-1 rounded-lg border bg-surface p-1">
+              {(['registered','manual'] as const).map(m=><button key={m} type="button" role="tab" aria-selected={mode===m} onClick={()=>switchMode(m)} className={`flex-1 rounded-md px-3 py-1.5 text-sm ${mode===m?'bg-secondary text-foreground':'text-muted-foreground'}`}>{m==='registered'?'Registered Client':'Manual Entry'}</button>)}
+            </div>
+            {mode==='registered'?<>
+              <Button type="button" variant="secondary" onClick={()=>setScan(true)}>Scan Member QR</Button>
+              <Field label="GYVORA Client ID or QR code"><div className="flex gap-2"><Input aria-label="GYVORA Client ID or QR code" value={memberId} onChange={e=>{setMemberId(e.target.value);setClientId(undefined);}}/><Button type="button" disabled={lookupBusy||busy} onClick={()=>void findClient(memberId)}>{lookupBusy?"Finding…":"Look up"}</Button></div></Field>
+              {clientId?<p className="break-words text-sm text-success">Confirm existing client · {f.name} · {f.email||'Email not provided'} · {f.phone||'Phone not provided'} · {memberId}</p>:<p className="text-xs text-muted-foreground">Look up the client's website account, then confirm their details below.</p>}
+            </>:<p className="text-xs text-muted-foreground">Gym-only record. No website account, GYVORA ID or QR code is created.</p>}
+          </div>}
           <Field label="Full name" className="sm:col-span-2"><Input required maxLength={80} value={f.name} onChange={(e) => up({ name: e.target.value })} /></Field>
           <Field label="Phone number"><Input required={!clientId} maxLength={30} value={f.phone} onChange={(e) => up({ phone: e.target.value })} /></Field>
           <Field label="Email (optional)"><Input aria-label="Email (optional)" type="email" maxLength={120} value={f.email} onChange={(e) => up({ email: e.target.value })} /></Field>

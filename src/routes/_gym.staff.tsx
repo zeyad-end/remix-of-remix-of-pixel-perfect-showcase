@@ -313,7 +313,7 @@ function Staff() {
                 ))}
               </select>
             </Field>
-            {(editing || !editing) && (
+            {(
               <fieldset className="grid grid-cols-2 gap-2">
                 <legend className="mb-2 text-sm">Permissions</legend>
                 {areas.map((a) => (

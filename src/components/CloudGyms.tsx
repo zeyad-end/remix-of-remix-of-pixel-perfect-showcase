@@ -12,7 +12,7 @@ import { sendAccountMessage } from '@/lib/account-messages.functions';
 import { MessageSquare } from 'lucide-react';
 import { gymPrices } from '@/lib/platform-subscriptions';
 import { egp } from '@/lib/mock';
-import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth } from '@/routes/super-admin.gyms';
+import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth } from '@/lib/approved-gym-columns';
 
 type AdminGym = Awaited<ReturnType<typeof listAdminGyms>>[number];
 

@@ -7,6 +7,7 @@ import { Textarea } from './ui/textarea';
 import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Field, selectCls } from './kit';
+import { formatGymDate } from '@/lib/approved-gym-columns';
 import { editGym, PLAN_PRICES, useDemoStore, type ApprovedGym } from '@/lib/demo';
 import { billingMonths, defaultPlatformPlans, gymPrices, planDefaults, planEndDate } from '@/lib/platform-subscriptions';
 
@@ -41,8 +42,8 @@ export function PlatformGymEdit({gym,onClose}:{gym:ApprovedGym;onClose:()=>void}
       <Field label="Monthly subscription price (EGP)"><Input type="number" min="0" step="any" required value={monthly} onChange={e=>{setMonthly(e.target.value);if(!manual)setAnnual(String(Number(e.target.value)*12));}}/></Field>
       <Field label="Annual subscription price (EGP)"><Input type="number" min="0" step="any" required value={annual} onChange={e=>{setAnnual(e.target.value);setManual(true);}}/></Field>
       <label className="flex items-center gap-2 text-sm"><Checkbox checked={!manual} onCheckedChange={checked=>{setManual(!checked);if(checked)setAnnual(String(Number(monthly)*12));}}/>Calculate annual price automatically (monthly × 12)</label>
-      <div className="grid gap-4 sm:grid-cols-2"><Field label="Subscription start date"><Input type="date" required value={start} onChange={e=>{setStart(e.target.value);if(autoDates&&e.target.value){try{setEnd(duration?planEndDate(e.target.value,duration):format(addMonths(parseISO(e.target.value),billingMonths(plan)),'yyyy-MM-dd'));}catch{}}}}/></Field>
-      <Field label="Subscription end date"><Input type="date" required min={start} value={end} onChange={e=>{setEnd(e.target.value);setAutoDates(false);}}/></Field></div>
+      <div className="grid gap-4 sm:grid-cols-2"><Field label="Subscription start date"><Input type="date" required value={start} onChange={e=>{setStart(e.target.value);if(autoDates&&e.target.value){try{setEnd(duration?planEndDate(e.target.value,duration):format(addMonths(parseISO(e.target.value),billingMonths(plan)),'yyyy-MM-dd'));}catch{}}}}/><span className="block text-xs text-muted-foreground">Shown as {formatGymDate(start)}</span></Field>
+      <Field label="Subscription end date"><Input type="date" required min={start} value={end} onChange={e=>{setEnd(e.target.value);setAutoDates(false);}}/><span className="block text-xs text-muted-foreground">Shown as {formatGymDate(end)}</span></Field></div>
       <Field label="Gym notes"><Textarea rows={4} maxLength={4000} value={notes} onChange={e=>setNotes(e.target.value)}/></Field>
       <div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={onClose}>Cancel</Button><Button>Save</Button></div>
     </form>

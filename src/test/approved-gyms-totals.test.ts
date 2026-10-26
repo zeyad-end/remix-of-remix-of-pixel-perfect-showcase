@@ -12,8 +12,10 @@ describe('Approved Gyms numbering and price totals', () => {
     expect(approvedGymColumnWidths).toHaveLength(approvedGymColumns.length);
   });
 
-  it('formats saved subscription dates and shows an em dash when a date is missing', () => {
-    expect(formatGymDate('2026-10-26')).toBe('26 Oct 2026');
+  it('formats saved subscription dates as numeric DD/MM/YYYY and shows an em dash when a date is missing', () => {
+    expect(formatGymDate('2026-10-26')).toBe('26/10/2026');
+    expect(formatGymDate('2026-03-05')).toBe('05/03/2026');
+    expect(formatGymDate('2028-02-29T00:00:00.000Z')).toBe('29/02/2028');
     expect(formatGymDate('')).toBe('—');
     expect(formatGymDate(undefined)).toBe('—');
     expect(formatGymDate('not-a-date')).toBe('—');

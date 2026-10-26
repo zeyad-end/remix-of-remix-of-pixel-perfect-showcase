@@ -85,7 +85,8 @@ export function ProgramEditor({
                 exercises: rows,
               });
               await onSave(p);
-              onClose();
+              setSavedFlash(true);
+              window.setTimeout(() => { setSavedFlash(false); onClose(); }, 700);
             } catch (e) {
               toast.error(e instanceof Error ? e.message : "Could not save program");
             } finally {
@@ -219,7 +220,7 @@ export function ProgramEditor({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button disabled={busy || uploading}>{busy ? "Saving…" : "Save"}</Button>
+            <Button disabled={busy || uploading || savedFlash} className={savedFlash ? "saved-flash" : undefined}>{savedFlash ? <><CheckCheck className="h-4 w-4" />Saved</> : busy ? "Saving…" : "Save"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

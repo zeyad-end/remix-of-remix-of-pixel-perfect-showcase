@@ -4,7 +4,8 @@ import { useStore, saveState, type Member } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QRScanner } from "@/components/QRScanner";
-import { DataTable, PageHeader, Panel, td } from "@/components/kit";
+import { DataTable, PageHeader, Panel, StatusPill, td } from "@/components/kit";
+import { Check } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MemberDialog } from "@/components/MemberDialog";
 import { toast } from "sonner";
@@ -33,6 +34,7 @@ function Attendance() {
   const [scan, setScan] = useState(false);
   const [expired, setExpired] = useState<Member | null>(null);
   const [renewOpen, setRenewOpen] = useState(false);
+  const [confirmed, setConfirmed] = useState<{ name: string; status: string; expiry: string } | null>(null);
   async function check(m: Member, method: "QR" | "Manual") {
     if (new Date(m.expiry + "T23:59:59").getTime() < Date.now()) {
       toast.error("Membership has expired");
@@ -42,6 +44,9 @@ function Attendance() {
       await saveState((s) => ({ attendance: recordClientVisit(s.attendance, m, method) }));
       setQ("");
       toast.success("Check-in recorded");
+      const days = Math.ceil((new Date(m.expiry + "T23:59:59").getTime() - Date.now()) / 86400000);
+      setConfirmed({ name: m.name, status: days <= 7 ? "Expiring" : "Active", expiry: m.expiry });
+      window.setTimeout(() => setConfirmed(null), 5000);
       return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not record check-in");
@@ -50,6 +55,7 @@ function Attendance() {
   }
   return (
     <>
+      {confirmed && <div role="status" className="confirm-reveal panel mb-6 flex items-center gap-4 border-success/40 p-4"><span className="confirm-check grid h-10 w-10 shrink-0 place-items-center rounded-full bg-success/15 text-success"><Check className="h-5 w-5" /></span><div className="min-w-0 flex-1"><div className="truncate font-semibold">{confirmed.name}</div><div className="text-xs text-muted-foreground">Checked in · membership until {confirmed.expiry}</div></div><StatusPill status={confirmed.status} /></div>}
       <PageHeader
         title="Attendance"
         actions={<Button onClick={() => setScan(true)}>Scan member QR</Button>}

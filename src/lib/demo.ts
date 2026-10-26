@@ -1201,3 +1201,10 @@ export function respondDemoAssignment(id: string, save: boolean) {
     programs: copy ? [copy, ...demoState.programs] : demoState.programs,
   });
 }
+
+export function setDemoDeletionNote(id:string, note:string) {
+  if(getDemoSession()!=='super')throw new Error('Administrator prototype access required');
+  if(note.length>1000)throw new Error('Reason is too long');
+  if(!demoState.gyms.some(g=>g.id===id&&g.deletedAt))throw new Error('Gym is not deleted');
+  commit({...demoState,gyms:demoState.gyms.map(g=>g.id===id?{...g,deletionNote:note.trim()}:g)});
+}

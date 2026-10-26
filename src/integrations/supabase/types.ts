@@ -897,6 +897,10 @@ export type Database = {
         Args: { deleted: boolean; g: string; note?: string }
         Returns: undefined
       }
+      set_gym_deletion_note: {
+        Args: { g: string; note: string }
+        Returns: undefined
+      }
       set_gym_frozen: {
         Args: { frozen: boolean; g: string; note?: string }
         Returns: undefined

@@ -328,7 +328,7 @@ export function prepareDemoIdentities() {
   }
 }
 export function lookupDemoClient(gymId:string,value:string) {
-  if(getDemoSession()!=='owner'||!['demo-gym','demo-gym-north'].includes(gymId)) throw new Error('Only the local gym owner can look up demo clients');
+  if(getDemoSession()!=='owner'||!(['demo-gym','demo-gym-north'].includes(gymId)||gymId.startsWith('prototype-gym-'))) throw new Error('Only the local gym owner can look up demo clients');
   const account=getDemoAccount();
   if(account&&!demoOwnerHasAccess(account))throw new Error('Gym access unavailable');
   const input=normalizeAccountLookup(value).toLowerCase();

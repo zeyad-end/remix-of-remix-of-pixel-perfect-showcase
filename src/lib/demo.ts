@@ -694,20 +694,26 @@ export function createDemoInvitation(
   name: string,
   email: string,
   role: "Admin" | "Reception" | "Trainer",
+  options?: { userId?: string; permissions?: string[] },
 ) {
-  const normalized = z.string().trim().email().max(255).parse(email).toLowerCase();
+  const normalized = email.trim()
+    ? z.string().trim().email().max(255).parse(email).toLowerCase()
+    : "";
   const fullName = z.string().trim().min(1).max(100).parse(name);
+  const userId = options?.userId ?? null;
+  if (!normalized && !userId)
+    throw new Error("Resolve an existing client account before sending the invitation");
   if (
     demoState.invitations.some(
       (i) =>
         i.gym_id === gymId &&
-        i.email === normalized &&
         i.role === role &&
-        invitationStatus(i.status, i.expires_at) === "Pending",
+        invitationStatus(i.status, i.expires_at) === "Pending" &&
+        ((normalized && i.email === normalized) || (userId && i.invited_user_id === userId)),
     )
   )
     throw new Error(
-      "An active invitation already exists for this email and role. Resend it from Invitations.",
+      "An active invitation already exists for this client and role. Resend it from Invitations.",
     );
   const row: DemoInvitation = {
     id: generateId(),
@@ -720,13 +726,14 @@ export function createDemoInvitation(
     created_at: new Date().toISOString(),
     expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
     accepted_by: null,
-    invited_user_id: null,
+    invited_user_id: userId,
     permissions:
-      role === "Admin"
+      options?.permissions ??
+      (role === "Admin"
         ? ["Members", "Attendance", "Sessions", "Payments", "Finance", "Workout programs"]
         : role === "Reception"
           ? ["Members", "Attendance", "Sessions", "Payments"]
-          : ["Members", "Workout programs"],
+          : ["Members", "Workout programs"]),
   };
   commit({ ...demoState, invitations: [row, ...demoState.invitations] });
   return row;

@@ -80,7 +80,7 @@ function Notifications() {
             {messages.map((m) => (
               <li key={m.id} className="rounded-md border bg-card p-4">
                 <p className="whitespace-pre-wrap break-words text-sm">{m.body}</p>
-                <p className="mt-2 text-xs text-muted-foreground">{new Date(m.created_at).toLocaleString()}</p>
+                <p className="mt-2 text-xs text-muted-foreground">From GYVORA Administration · {new Date(m.created_at).toLocaleString()}</p>
               </li>
             ))}
           </ul>

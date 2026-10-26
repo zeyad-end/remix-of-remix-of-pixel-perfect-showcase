@@ -7,6 +7,7 @@ import { Textarea } from './ui/textarea';
 import { Checkbox } from './ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Field, selectCls } from './kit';
+import { formatGymDate } from '@/lib/approved-gym-columns';
 import { editGym, PLAN_PRICES, useDemoStore, type ApprovedGym } from '@/lib/demo';
 import { billingMonths, defaultPlatformPlans, gymPrices, planDefaults, planEndDate } from '@/lib/platform-subscriptions';
 

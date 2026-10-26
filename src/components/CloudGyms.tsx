@@ -12,7 +12,7 @@ import { sendAccountMessage } from '@/lib/account-messages.functions';
 import { MessageSquare } from 'lucide-react';
 import { gymPrices } from '@/lib/platform-subscriptions';
 import { egp } from '@/lib/mock';
-import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth } from '@/lib/approved-gym-columns';
+import { approvedGymColumns, approvedGymColumnWidths, approvedGymTableMinWidth, approvedGymTotals } from '@/lib/approved-gym-columns';
 
 type AdminGym = Awaited<ReturnType<typeof listAdminGyms>>[number];
 
@@ -80,12 +80,18 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
     finally { setBusy(false); }
   }
   const visibleRows=rows.filter(g=>g.deleted===deleted);
+  const totals = deleted ? { monthlyPrice: 0, annualPrice: 0 } : approvedGymTotals(visibleRows);
 
   return (
     <div>
-      <PageHeader title={deleted ? "Deleted Gyms" : "Approved Gyms"} subtitle={`Total ${deleted ? "deleted" : "approved"} gyms: ${visibleRows.length}`} />
+      <PageHeader title={deleted ? "Deleted Gyms" : "Approved Gyms"} subtitle={deleted ? `Total deleted gyms: ${visibleRows.length}` : ''} />
+      {!deleted && loaded && <div className="panel mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 px-4 py-3 text-sm">
+        <span className="font-semibold">Total approved gyms: {visibleRows.length}</span>
+        <span className="text-muted-foreground">Total monthly price: <span className="font-semibold tabular-nums text-foreground">{egp(totals.monthlyPrice)}</span></span>
+        <span className="text-muted-foreground">Total annual price: <span className="font-semibold tabular-nums text-foreground">{egp(totals.annualPrice)}</span></span>
+      </div>}
       {error && <p role="alert" className="mb-4 text-destructive">{error}</p>}
-      {!loaded ? <TableSkeleton cols={deleted ? 7 : 8} /> : <><DataTable head={deleted ? deletedHead : approvedGymColumns} widths={deleted ? undefined : approvedGymColumnWidths} minWidth={deleted ? 640 : approvedGymTableMinWidth}>
+      {!loaded ? <TableSkeleton cols={deleted ? 7 : 9} /> : <><DataTable head={deleted ? deletedHead : approvedGymColumns} widths={deleted ? undefined : approvedGymColumnWidths} minWidth={deleted ? 640 : approvedGymTableMinWidth}>
         {visibleRows.map((g, i) => {
           const prices = gymPrices({ plan: g.plan });
           return (
@@ -98,6 +104,7 @@ export function CloudGyms({ deleted = false }: { deleted?: boolean }) {
               <td className={`${td} max-w-sm whitespace-pre-wrap break-words`}>{g.deletionNote || '—'}</td>
               <td className={td}><Button size="sm" variant="outline" disabled={busy} onClick={()=>setRestoring(g)}>Edit / Restore</Button></td>
             </> : <>
+              <td className={`${td} tabular-nums`}>{i + 1}</td>
               <td className={`${td} min-w-[15rem]`}>{g.name}</td>
               <td className={`${td} max-w-[18rem] break-words`}>{g.ownerEmail || 'Not provided'}</td>
               <td className={`${td} whitespace-nowrap`}>{g.ownerPhone || 'Not provided'}</td>

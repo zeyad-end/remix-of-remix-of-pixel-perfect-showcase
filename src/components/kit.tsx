@@ -61,13 +61,13 @@ export function Avatar({ initials, size = "md" }: { initials: string; size?: "sm
   return <span className={cn("grid shrink-0 place-items-center rounded-full bg-accent font-display font-semibold text-primary", s)}>{initials}</span>;
 }
 
-export function DataTable({ head, children }: { head: string[]; children: ReactNode }) {
+export function DataTable({ head, children, minWidth = 640, widths }: { head: string[]; children: ReactNode; minWidth?: number; widths?: (string | undefined)[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] text-sm">
+      <table className="w-full text-sm" style={{ minWidth }}>
         <thead>
           <tr className="border-b text-left">
-            {head.map((h) => <th key={h} className="eyebrow pb-3 pr-4 font-semibold">{h}</th>)}
+            {head.map((h, i) => <th key={h} style={widths?.[i] ? { width: widths[i] } : undefined} className="eyebrow pb-3 pr-4 font-semibold">{h}</th>)}
           </tr>
         </thead>
         <tbody className="divide-y divide-border">{children}</tbody>

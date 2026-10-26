@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { CloudGyms } from '@/components/CloudGyms';
-import { getDemoSession, useDemoStore, restoreGym, type ApprovedGym } from '@/lib/demo';
+import { getDemoSession, useDemoStore, restoreGym, setDemoDeletionNote, type ApprovedGym } from '@/lib/demo';
+import { AdminNoteCell } from '@/components/AdminNoteCell';
 import { DataTable, PageHeader, td } from '@/components/kit';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';

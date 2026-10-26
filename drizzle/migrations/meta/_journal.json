@@ -43,6 +43,13 @@
       "when": 1793034773946,
       "tag": "0005_mark_account_messages_read",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793035066686,
+      "tag": "0006_gym_deletion_note",
+      "breakpoints": true
     }
   ]
 }

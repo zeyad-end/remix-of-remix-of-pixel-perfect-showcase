@@ -16,7 +16,7 @@ import { clientGymContent, useClientGyms, type ClientGymContent } from '@/lib/cl
 import { personalGymCopy, workoutSourceId, hasGymSource } from '@/lib/workout-sources';
 import { getDemoSession, getDemoState, saveDemoProgram } from '@/lib/demo';
 import { supabase } from '@/integrations/supabase/client';
-import type { Json } from '@/integrations/supabase/types';
+import { saveGymProgram, programSaveError } from '@/lib/client-programs';
 import { fmt12, type Workout } from '@/lib/store';
 import { initials } from '@/lib/mock';
 import { seo } from '@/lib/seo';
@@ -64,11 +64,10 @@ function GymProfile() {
         const exists = getDemoState().programs.some(r => r.user_id === c.profile?.id && hasGymSource(r.definition, id, source));
         if (!exists) saveDemoProgram(c.profile.id, copy);
       } else {
-        const { error: failure } = await supabase.from('client_programs').insert({ user_id: c.profile.id, definition: copy as unknown as Json, source_gym_id: id, source_workout_id: source });
-        if (failure && failure.code !== '23505') throw failure;
+        await saveGymProgram(workout, id);
       }
       setSaved(values => [...values, source]); toast.success('Saved to your personal workouts');
-    } catch { toast.error('Could not save workout. Please try again.'); } finally { setBusy(''); }
+    } catch (error) { toast.error(programSaveError(error)); } finally { setBusy(''); }
   }
   if (!gym || !content) return <ClientShell title={gym?.name ?? 'Gym'}><p role={error ? 'alert' : 'status'}>{error || p.error || 'Loading gym…'}</p><Button asChild variant="outline" className="mt-4"><Link to="/member/join">Join a Gym</Link></Button></ClientShell>;
   const profile = content.profile; const currency = profile.currency || profile.preferences?.currency || 'EGP';

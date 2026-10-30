@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database, Json } from "@/integrations/supabase/types";
+import type { Database } from "@/integrations/supabase/types";
 import { useCloud } from "@/components/CloudProvider";
 import { ClientShell } from "@/components/ClientShell";
 import { ProgramEditor, ExerciseImage } from "@/components/ProgramEditor";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { getDemoSession, getDemoState, saveDemoProgram, changeDemoProgram } from "@/lib/demo";
 import { hasGymSource } from "@/lib/workout-sources";
 import { seo } from "@/lib/seo";
+import { savePersonalProgram, changePersonalProgram, programSaveError } from '@/lib/client-programs';
 type Row = Database["public"]["Tables"]["client_programs"]["Row"];
 export const Route = createFileRoute("/member/workouts")({
   head: () => seo("My workouts", "Manage personal workout programs and track exercise completion."),
@@ -47,17 +48,15 @@ function Workouts() {
     void load();
   }, [c.profile?.id]);
   async function completion(row: Row, marks: number[]) {
+    try {
     if (getDemoSession()) {
       changeDemoProgram(row.id, marks);
       await load();
       return;
     }
-    const { error } = await supabase
-      .from("client_programs")
-      .update({ completion: marks })
-      .eq("id", row.id);
-    if (error) toast.error(error.message);
-    else setRows(rows.map((r) => (r.id === row.id ? { ...r, completion: marks } : r)));
+    await changePersonalProgram(row.id, marks);
+    setRows(rows.map((r) => (r.id === row.id ? { ...r, completion: marks } : r)));
+    } catch (error) { toast.error(programSaveError(error)); }
   }
   return (
     <ClientShell
@@ -103,21 +102,17 @@ function Workouts() {
                     variant="destructive"
                     onClick={async () => {
                       if (!window.confirm("Delete this personal program?")) return;
+                      try {
                       if (getDemoSession()) {
                         changeDemoProgram(row.id, null);
                         await load();
                         toast.success("Program deleted");
                         return;
                       }
-                      const { error } = await supabase
-                        .from("client_programs")
-                        .delete()
-                        .eq("id", row.id);
-                      if (error) toast.error(error.message);
-                      else {
+                      await changePersonalProgram(row.id, null);
                         toast.success("Program deleted");
-                        void load();
-                      }
+                        await load();
+                      } catch (error) { toast.error(programSaveError(error)); }
                     }}
                   >
                     Delete
@@ -174,7 +169,7 @@ function Workouts() {
         onClose={() => setOpen(false)}
         program={editing ? (editing.definition as unknown as Workout) : null}
         onSave={async (w) => {
-          if (!c.profile) return;
+          if (!c.profile) throw new Error('Sign in to your Client account before saving programs.');
           const parsed = programSchema.parse(w);
           const previous = editing?.definition as unknown as Record<string, unknown> | undefined;
           const p = previous && typeof previous["sourceGymId"] === "string" && typeof previous["sourceWorkoutId"] === "string" && hasGymSource(previous,previous["sourceGymId"],previous["sourceWorkoutId"]) ? {...parsed,sourceGymId:previous["sourceGymId"],sourceWorkoutId:previous["sourceWorkoutId"]} : parsed;
@@ -184,15 +179,7 @@ function Workouts() {
             await load();
             return;
           }
-          const { error } = editing
-            ? await supabase
-                .from("client_programs")
-                .update({ definition: p as unknown as Json, completion: [] })
-                .eq("id", editing.id)
-            : await supabase
-                .from("client_programs")
-                .insert({ user_id: c.profile.id, definition: p as unknown as Json });
-          if (error) throw error;
+          await savePersonalProgram(p, editing?.id);
           toast.success("Program saved");
           await load();
         }}

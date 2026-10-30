@@ -912,7 +912,7 @@ export function changeDemoStaff(
   });
 }
 export function saveDemoProgram(userId: string, definition: Workout, id?: string) {
-  if (getDemoSession() !== "individual" || demoUserId(getDemoSessionInfo()?.email ?? "") !== userId)
+  if (getDemoSession() !== "individual" || currentDemoClientId() !== userId)
     throw new Error("Your own programs only");
   const row: DemoProgram = {
     id: id ?? generateId(),
@@ -931,7 +931,7 @@ export function saveDemoProgram(userId: string, definition: Workout, id?: string
   });
 }
 export function changeDemoProgram(id: string, completion: number[] | null) {
-  const userId = demoUserId(getDemoSessionInfo()?.email ?? "");
+  const userId = currentDemoClientId();
   const row = demoState.programs.find((p) => p.id === id && p.user_id === userId);
   if (getDemoSession() !== "individual" || !row) throw new Error("Program unavailable");
   commit({
@@ -941,6 +941,12 @@ export function changeDemoProgram(id: string, completion: number[] | null) {
         ? demoState.programs.filter((p) => p.id !== id)
         : demoState.programs.map((p) => (p.id === id ? { ...p, completion } : p)),
   });
+}
+
+/** The same isolated identity exposed by CloudProvider, never a Cloud user ID. */
+function currentDemoClientId() {
+  const preview = readPreviewSession();
+  return preview?.type === 'individual' ? preview.id : demoUserId(getDemoSessionInfo()?.email ?? '');
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -1205,7 +1211,7 @@ export function pendingDemoAssignments(userId: string, rows = demoState.assignme
 /** Save copies the snapshot into the recipient's own programs; Delete only dismisses the notification. */
 export function respondDemoAssignment(id: string, save: boolean) {
   if (getDemoSession() !== "individual") throw new Error("Open your client account to respond");
-  const userId = demoUserId(getDemoSessionInfo()?.email ?? "");
+  const userId = currentDemoClientId();
   const row = demoState.assignments.find((a) => a.id === id && a.recipientId === userId);
   if (!row || row.status !== "Pending") throw new Error("Workout unavailable");
   const copy: DemoProgram | null = save
